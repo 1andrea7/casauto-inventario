@@ -1645,17 +1645,13 @@
                     </div>
                     <div class="form-group full">
                         <label>Producto *</label>
-                        <select>
-                            <option>Seleccionar producto...</option>
-                            <option>Aceite Mobil 5W-30 4L (ACE-001)</option>
-                            <option>Filtro Aire Bosch A3013 (FIL-008)</option>
-                            <option>Batería 65AH Bosch S4 (BAT-003)</option>
-                            <option>Pastillas Brembo P06020 (FRE-014)</option>
+                        <select id="mov-producto">
+                            <option value="">Seleccionar producto...</option>
                         </select>
                     </div>
                     <div class="form-group">
                         <label>Cantidad *</label>
-                        <input type="number" placeholder="0" min="1">
+                        <input id="mov-cantidad" type="number" placeholder="0" min="1">
                     </div>
                     <div class="form-group">
                         <label>Precio Unitario Movimiento</label>
@@ -1663,7 +1659,7 @@
                     </div>
                     <div class="form-group">
                         <label>Motivo *</label>
-                        <select>
+                        <select id="mov-motivo">
                             <option>Compra proveedor</option>
                             <option>Orden de trabajo</option>
                             <option>Ajuste de inventario</option>
@@ -1673,13 +1669,13 @@
                     </div>
                     <div class="form-group">
                         <label>Referencia / Documento</label>
-                        <input type="text" placeholder="FAC-XXXX / ORD-XXXX">
+                        <input id="mov-referencia" type="text" placeholder="FAC-XXXX / ORD-XXXX">
                     </div>
                 </div>
             </div>
             <div class="modal-footer">
                 <button class="btn btn-ghost" onclick="closeModal('modal-movimiento')">Cancelar</button>
-                <button class="btn btn-primary" onclick="closeModal('modal-movimiento');showToast('Movimiento registrado correctamente','red')">Registrar</button>
+                <button class="btn btn-primary" onclick="guardarMovimiento()">Registrar</button>
             </div>
         </div>
     </div>
@@ -1815,7 +1811,10 @@
             if (name === 'usuarios') cargarUsuarios();
         }
 
-        function openModal(id) { document.getElementById(id).classList.add('open'); }
+        function openModal(id) {
+            document.getElementById(id).classList.add('open');
+            if (id === 'modal-movimiento') cargarProductosEnSelect();
+        }
         function closeModal(id) { document.getElementById(id).classList.remove('open'); }
 
         document.querySelectorAll('.form-overlay').forEach(o => {
@@ -1853,6 +1852,71 @@
             text.textContent = msg;
             toast.classList.add('show');
             setTimeout(() => toast.classList.remove('show'), 3000);
+        }
+        // ═══ MOVIMIENTOS ═══
+        async function cargarProductosEnSelect() {
+            try {
+                const res = await fetch(`${API}/Productos`);
+                const productos = await res.json();
+                const select = document.getElementById('mov-producto');
+                select.innerHTML = '<option value="">Seleccionar producto...</option>';
+                productos.forEach(p => {
+                    select.innerHTML += `<option value="${p.idProducto}">${p.nombre} (${p.codigoProducto})</option>`;
+                });
+            } catch (err) {
+                showToast('Error cargando productos', 'red');
+            }
+        }
+
+        async function guardarMovimiento() {
+            const idProducto = parseInt(document.getElementById('mov-producto').value);
+            const cantidad = parseInt(document.getElementById('mov-cantidad').value);
+            const motivo = document.getElementById('mov-motivo').value;
+            const referencia = document.getElementById('mov-referencia').value.trim();
+
+            // Detectar tipo según botón activo
+            const esEntrada = document.getElementById('tipo-entrada').classList.contains('active');
+            const tipo = esEntrada ? 'entrada' : 'salida';
+
+            if (!idProducto || !cantidad || cantidad <= 0) {
+                showToast('Selecciona un producto y una cantidad válida', 'yellow');
+                return;
+            }
+
+            try {
+                const res = await fetch(`${API}/Movimientos`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        tipoMovimiento: tipo,
+                        idProducto,
+                        cantidad,
+                        motivo,
+                        referenciaDocumento: referencia,
+                        idUsuario: usuarioActual.idUsuario,
+                        stockAntes: 0,
+                        stockDespues: 0
+                    })
+                });
+
+                if (!res.ok) {
+                    showToast('Error al registrar el movimiento', 'red');
+                    return;
+                }
+
+                closeModal('modal-movimiento');
+                showToast('Movimiento registrado correctamente', 'green');
+
+                // Limpiar campos
+                document.getElementById('mov-producto').value = '';
+                document.getElementById('mov-cantidad').value = '';
+                document.getElementById('mov-referencia').value = '';
+
+                cargarProductos();
+
+            } catch (err) {
+                showToast('Error conectando con la API', 'red');
+            }
         }
         // ═══ GUARDAR PRODUCTO ═══
         async function guardarProducto() {

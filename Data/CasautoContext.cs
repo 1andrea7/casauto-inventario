@@ -11,6 +11,7 @@ namespace CasautoAPI.Data
         public DbSet<Rol> Roles { get; set; }
         public DbSet<Usuario> Usuarios { get; set; }
         public DbSet<Producto> Productos { get; set; }
+        public DbSet<MovimientoInventario> MovimientosInventario { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -54,6 +55,23 @@ namespace CasautoAPI.Data
             modelBuilder.Entity<Producto>().Property(p => p.FechaCreacion).HasColumnName("fecha_creacion");
             modelBuilder.Entity<Producto>().Property(p => p.FechaUltimaModificacion).HasColumnName("fecha_ultima_modificacion");
             modelBuilder.Entity<Producto>().Property(p => p.IdUsuarioCreacion).HasColumnName("id_usuario_creacion");
+
+            // Tabla MOVIMIENTO_INVENTARIO
+            modelBuilder.Entity<MovimientoInventario>().ToTable("MOVIMIENTO_INVENTARIO");
+            modelBuilder.Entity<MovimientoInventario>().HasKey(m => m.IdMovimiento);
+            modelBuilder.Entity<MovimientoInventario>().Property(m => m.IdMovimiento).HasColumnName("id_movimiento");
+            modelBuilder.Entity<MovimientoInventario>().Property(m => m.TipoMovimiento).HasColumnName("tipo_movimiento");
+            modelBuilder.Entity<MovimientoInventario>().Property(m => m.IdProducto).HasColumnName("id_producto");
+            modelBuilder.Entity<MovimientoInventario>().Property(m => m.Cantidad).HasColumnName("cantidad");
+            modelBuilder.Entity<MovimientoInventario>().Property(m => m.PrecioUnitarioMovimiento).HasColumnName("precio_unitario_movimiento");
+            modelBuilder.Entity<MovimientoInventario>().Property(m => m.Motivo).HasColumnName("motivo");
+            modelBuilder.Entity<MovimientoInventario>().Property(m => m.ReferenciaDocumento).HasColumnName("referencia_documento");
+            modelBuilder.Entity<MovimientoInventario>().Property(m => m.Observaciones).HasColumnName("observaciones");
+            modelBuilder.Entity<MovimientoInventario>().Property(m => m.StockAntes).HasColumnName("stock_antes");
+            modelBuilder.Entity<MovimientoInventario>().Property(m => m.StockDespues).HasColumnName("stock_despues");
+            modelBuilder.Entity<MovimientoInventario>().Property(m => m.IdUsuario).HasColumnName("id_usuario");
+            modelBuilder.Entity<MovimientoInventario>().Property(m => m.FechaMovimiento).HasColumnName("fecha_movimiento");
+            modelBuilder.Entity<MovimientoInventario>().HasOne(m => m.Producto).WithMany().HasForeignKey(m => m.IdProducto);
         }
     }
 }
