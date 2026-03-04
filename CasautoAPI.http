@@ -1,0 +1,6 @@
+@CasautoAPI_HostAddress = http://localhost:5043
+
+GET {{CasautoAPI_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###

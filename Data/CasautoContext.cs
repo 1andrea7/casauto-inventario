@@ -1,0 +1,59 @@
+﻿using CasautoAPI.Models;
+using Microsoft.EntityFrameworkCore;
+
+namespace CasautoAPI.Data
+{
+    public class CasautoContext : DbContext
+    {
+        public CasautoContext(DbContextOptions<CasautoContext> options)
+            : base(options) { }
+
+        public DbSet<Rol> Roles { get; set; }
+        public DbSet<Usuario> Usuarios { get; set; }
+        public DbSet<Producto> Productos { get; set; }
+
+        protected override void OnModelCreating(ModelBuilder modelBuilder)
+        {
+            // Tabla ROL
+            modelBuilder.Entity<Rol>().ToTable("ROL");
+            modelBuilder.Entity<Rol>().HasKey(r => r.IdRol);
+            modelBuilder.Entity<Rol>().Property(r => r.IdRol).HasColumnName("id_rol");
+            modelBuilder.Entity<Rol>().Property(r => r.NombreRol).HasColumnName("nombre_rol");
+            modelBuilder.Entity<Rol>().Property(r => r.Descripcion).HasColumnName("descripcion");
+            modelBuilder.Entity<Rol>().Property(r => r.Permisos).HasColumnName("permisos");
+
+            // Tabla USUARIO
+            modelBuilder.Entity<Usuario>().ToTable("USUARIO");
+            modelBuilder.Entity<Usuario>().HasKey(u => u.IdUsuario);
+            modelBuilder.Entity<Usuario>().Property(u => u.IdUsuario).HasColumnName("id_usuario");
+            modelBuilder.Entity<Usuario>().Property(u => u.Nombre).HasColumnName("nombre");
+            modelBuilder.Entity<Usuario>().Property(u => u.Apellido).HasColumnName("apellido");
+            modelBuilder.Entity<Usuario>().Property(u => u.Email).HasColumnName("email");
+            modelBuilder.Entity<Usuario>().Property(u => u.ContrasenaHash).HasColumnName("contrasena_hash");
+            modelBuilder.Entity<Usuario>().Property(u => u.Estado).HasColumnName("estado");
+            modelBuilder.Entity<Usuario>().Property(u => u.FechaCreacion).HasColumnName("fecha_creacion");
+            modelBuilder.Entity<Usuario>().Property(u => u.FechaUltimaModificacion).HasColumnName("fecha_ultima_modificacion");
+            modelBuilder.Entity<Usuario>().Property(u => u.IdRol).HasColumnName("id_rol");
+            modelBuilder.Entity<Usuario>().HasOne(u => u.Rol).WithMany().HasForeignKey(u => u.IdRol);
+
+            // Tabla PRODUCTO
+            modelBuilder.Entity<Producto>().ToTable("PRODUCTO");
+            modelBuilder.Entity<Producto>().HasKey(p => p.IdProducto);
+            modelBuilder.Entity<Producto>().Property(p => p.IdProducto).HasColumnName("id_producto");
+            modelBuilder.Entity<Producto>().Property(p => p.CodigoProducto).HasColumnName("codigo_producto");
+            modelBuilder.Entity<Producto>().Property(p => p.Nombre).HasColumnName("nombre");
+            modelBuilder.Entity<Producto>().Property(p => p.Descripcion).HasColumnName("descripcion");
+            modelBuilder.Entity<Producto>().Property(p => p.IdCategoria).HasColumnName("id_categoria");
+            modelBuilder.Entity<Producto>().Property(p => p.PrecioUnitario).HasColumnName("precio_unitario");
+            modelBuilder.Entity<Producto>().Property(p => p.PrecioCompra).HasColumnName("precio_compra");
+            modelBuilder.Entity<Producto>().Property(p => p.StockActual).HasColumnName("stock_actual");
+            modelBuilder.Entity<Producto>().Property(p => p.StockMinimo).HasColumnName("stock_minimo");
+            modelBuilder.Entity<Producto>().Property(p => p.UnidadMedida).HasColumnName("unidad_medida");
+            modelBuilder.Entity<Producto>().Property(p => p.UbicacionBodega).HasColumnName("ubicacion_bodega");
+            modelBuilder.Entity<Producto>().Property(p => p.Estado).HasColumnName("estado");
+            modelBuilder.Entity<Producto>().Property(p => p.FechaCreacion).HasColumnName("fecha_creacion");
+            modelBuilder.Entity<Producto>().Property(p => p.FechaUltimaModificacion).HasColumnName("fecha_ultima_modificacion");
+            modelBuilder.Entity<Producto>().Property(p => p.IdUsuarioCreacion).HasColumnName("id_usuario_creacion");
+        }
+    }
+}
