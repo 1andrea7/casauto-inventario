@@ -22,6 +22,7 @@ namespace CasautoAPI.Controllers
         {
             return await _context.MovimientosInventario
                 .Include(m => m.Producto)
+                .Include(m => m.Usuario)
                 .OrderByDescending(m => m.FechaMovimiento)
                 .ToListAsync();
         }

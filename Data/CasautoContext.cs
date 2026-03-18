@@ -72,6 +72,7 @@ namespace CasautoAPI.Data
             modelBuilder.Entity<MovimientoInventario>().Property(m => m.IdUsuario).HasColumnName("id_usuario");
             modelBuilder.Entity<MovimientoInventario>().Property(m => m.FechaMovimiento).HasColumnName("fecha_movimiento");
             modelBuilder.Entity<MovimientoInventario>().HasOne(m => m.Producto).WithMany().HasForeignKey(m => m.IdProducto);
+            modelBuilder.Entity<MovimientoInventario>().HasOne(m => m.Usuario).WithMany().HasForeignKey(m => m.IdUsuario);
         }
     }
 }

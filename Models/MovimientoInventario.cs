@@ -15,5 +15,6 @@
         public int IdUsuario { get; set; }
         public DateTime? FechaMovimiento { get; set; }
         public Producto? Producto { get; set; }
+        public Usuario? Usuario { get; set; }
     }
 }

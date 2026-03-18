@@ -1815,6 +1815,7 @@
 
                 showToast(`Bienvenido, ${usuarioActual.nombre}! — ${usuarioActual.rol}`, 'green');
                 cargarProductos();
+                cargarDashboard();
 
             } catch (err) {
                 errorDiv.textContent = '⚠ Error conectando con el servidor.';
@@ -1878,6 +1879,8 @@
                 `<span class="first">${title[0]}</span>${title.slice(1)}`;
             if (name === 'productos') cargarProductos();
             if (name === 'usuarios') cargarUsuarios();
+            if (name === 'movimientos') cargarMovimientos();
+            if (name === 'dashboard') cargarDashboard();
         }
 
         function openModal(id, cargarProductos = true) {
@@ -1928,6 +1931,70 @@
             text.textContent = msg;
             toast.classList.add('show');
             setTimeout(() => toast.classList.remove('show'), 3000);
+        }
+        // ═══ DASHBOARD ═══
+        async function cargarDashboard() {
+            try {
+                const res = await fetch(`${API}/Dashboard`);
+                const d = await res.json();
+
+                // KPIs
+                document.querySelector('.kpi.k1 .kpi-value').textContent = d.totalProductos;
+                document.querySelector('.kpi.k2 .kpi-value').textContent = d.entradasHoy;
+                document.querySelector('.kpi.k3 .kpi-value').textContent = d.stockCritico;
+
+                const valorM = d.valorInventario >= 1000000
+                    ? `$${(d.valorInventario / 1000000).toFixed(1)}M`
+                    : `$${d.valorInventario.toLocaleString('es-CO')}`;
+                document.querySelector('.kpi.k4 .kpi-value').textContent = valorM;
+
+                // Últimos movimientos
+                const actList = document.querySelector('.activity-list');
+                if (d.ultimosMovimientos.length > 0) {
+                    actList.innerHTML = d.ultimosMovimientos.map(m => {
+                        const esEntrada = m.tipoMovimiento === 'entrada';
+                        const iconClass = esEntrada ? 'in' : 'out';
+                        const arrow = esEntrada
+                            ? '<path d="M5 12h14M12 5l7 7-7 7"/>'
+                            : '<path d="M19 12H5M12 19l-7-7 7-7"/>';
+                        const qty = esEntrada ? `+${m.cantidad}` : `-${m.cantidad}`;
+                        const hace = calcularHace(m.fechaMovimiento);
+                        return `<div class="activity-item">
+            <div class="act-icon ${iconClass}">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">${arrow}</svg>
+            </div>
+            <div class="act-body">
+              <div class="act-title">${m.producto?.nombre || '—'}</div>
+              <div class="act-meta">${esEntrada ? 'Entrada' : 'Salida'} · ${m.motivo || '—'} · ${hace}</div>
+            </div>
+            <div class="act-qty ${iconClass}">${qty}</div>
+          </div>`;
+                    }).join('');
+                }
+
+                // Alertas de stock
+                const alertList = document.querySelector('.alert-list');
+                if (d.alertas.length > 0) {
+                    alertList.innerHTML = d.alertas.map(p => {
+                        const esCritico = p.stockActual === 0;
+                        return `<div class="alert-item ${esCritico ? 'critical' : 'warning'}">
+            <div class="alert-dot"></div>
+            <div class="alert-prod">${p.nombre}</div>
+            <div class="alert-stock">${p.stockActual} / mín ${p.stockMinimo}</div>
+          </div>`;
+                    }).join('');
+                }
+
+            } catch (err) {
+                console.error('Error cargando dashboard:', err);
+            }
+        }
+
+        function calcularHace(fecha) {
+            const diff = Math.floor((new Date() - new Date(fecha)) / 60000);
+            if (diff < 60) return `Hace ${diff} min`;
+            if (diff < 1440) return `Hace ${Math.floor(diff / 60)} horas`;
+            return `Hace ${Math.floor(diff / 1440)} días`;
         }
         // ═══ MOVIMIENTOS ═══
         async function cargarProductosEnSelect() {
@@ -2348,6 +2415,48 @@
                     showToast('Error conectando con la API', 'red');
                 }
             });
+        }
+
+        // ═══ CARGAR MOVIMIENTOS DESDE API ═══
+        async function cargarMovimientos() {
+            const tbody = document.querySelector('#view-movimientos table tbody');
+            tbody.innerHTML = `<tr><td colspan="8" style="text-align:center;color:var(--text3);padding:30px">Cargando movimientos...</td></tr>`;
+            try {
+                const [resM, resU] = await Promise.all([
+                    fetch(`${API}/Movimientos`),
+                    fetch(`${API}/Usuarios`)
+                ]);
+                const movimientos = await resM.json();
+                const usuarios = await resU.json();
+                const mapaUsuarios = {};
+                usuarios.forEach(u => mapaUsuarios[u.idUsuario] = u.nombre + ' ' + u.apellido);
+                if (movimientos.length === 0) {
+                    tbody.innerHTML = `<tr><td colspan="8" style="text-align:center;color:var(--text3);padding:30px">No hay movimientos registrados.</td></tr>`;
+                    return;
+                }
+                tbody.innerHTML = movimientos.map(m => {
+                    const fecha = new Date(m.fechaMovimiento).toLocaleDateString('es-CO', {
+                        day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit'
+                    });
+                    const eEntrada = m.tipoMovimiento === 'entrada';
+                    const badgeClass = eEntrada ? 'in' : 'out';
+                    const badgeText = eEntrada ? '▲ Entrada' : '▼ Salida';
+                    const cantColor = eEntrada ? 'color:var(--green)' : 'color:var(--accent)';
+                    const cantPrefix = eEntrada ? '+' : '-';
+                    return `<tr>
+          <td class="mono">${fecha}</td>
+          <td><span class="badge ${badgeClass}">${badgeText}</span></td>
+          <td class="bold">${m.producto?.nombre || '—'}</td>
+          <td class="mono" style="${cantColor}">${cantPrefix}${m.cantidad}</td>
+          <td class="mono">${m.stockAntes} → ${m.stockDespues}</td>
+          <td>${m.motivo || '—'}</td>
+          <td class="mono">${m.referenciaDocumento || '—'}</td>
+          <td>${mapaUsuarios[m.idUsuario] || m.idUsuario}</td>
+        </tr>`;
+                }).join('');
+            } catch (err) {
+                tbody.innerHTML = `<tr><td colspan="8" style="text-align:center;color:var(--accent);padding:30px">⚠ Error conectando con la API</td></tr>`;
+            }
         }
 
         // ═══ FILTRAR PRODUCTOS ═══
