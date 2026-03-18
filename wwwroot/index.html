@@ -1091,19 +1091,21 @@
             <!-- ═══ PRODUCTOS ═══ -->
             <div class="view" id="view-productos">
                 <div class="filters">
-                    <select class="filter-select">
-                        <option>Todas las categorías</option>
-                        <option>Aceites y Lubricantes</option>
-                        <option>Filtros</option>
-                        <option>Frenos</option>
-                        <option>Baterías</option>
-                        <option>Llantas</option>
+                    <select class="filter-select" id="filtro-categoria" onchange="filtrarProductos()">
+                        <option value="">Todas las categorías</option>
+                        <option value="1">Aceites y Lubricantes</option>
+                        <option value="2">Filtros</option>
+                        <option value="3">Frenos</option>
+                        <option value="4">Baterías</option>
+                        <option value="5">Llantas</option>
+                        <option value="6">Correas y Poleas</option>
+                        <option value="7">Electricidad</option>
                     </select>
-                    <select class="filter-select">
-                        <option>Todos los estados</option>
-                        <option>Stock OK</option>
-                        <option>Stock Bajo</option>
-                        <option>Sin Stock</option>
+                    <select class="filter-select" id="filtro-estado" onchange="filtrarProductos()">
+                        <option value="">Todos los estados</option>
+                        <option value="ok">Stock OK</option>
+                        <option value="low">Stock Bajo</option>
+                        <option value="out">Sin Stock</option>
                     </select>
                     <div class="filters-right">
                         <button class="btn btn-ghost btn-sm">
@@ -1130,7 +1132,7 @@
                                     <th>Precio Compra</th>
                                     <th>Precio Unit.</th>
                                     <th>Estado</th>
-                                    <th style="width:120px"></th>
+                                    <th id="th-acciones" style="width:120px; text-align:center">Acciones</th>
                                 </tr>
                             </thead>
                             <tbody id="tbody-productos">
@@ -1564,7 +1566,51 @@
             </div>
         </div>
     </div>
-
+    <!-- ═══ MODAL: EDITAR USUARIO ═══ -->
+    <div class="form-overlay" id="modal-editar-usuario">
+        <div class="form-modal" style="width:480px">
+            <div class="modal-header">
+                <span class="modal-title">Editar Usuario</span>
+                <button class="modal-close" onclick="closeModal('modal-editar-usuario')">✕</button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="eu-id">
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label>Nombre *</label>
+                        <input id="eu-nombre" type="text">
+                    </div>
+                    <div class="form-group">
+                        <label>Apellido *</label>
+                        <input id="eu-apellido" type="text">
+                    </div>
+                    <div class="form-group full">
+                        <label>Email *</label>
+                        <input id="eu-email" type="email">
+                    </div>
+                    <div class="form-group">
+                        <label>Rol *</label>
+                        <select id="eu-rol">
+                            <option value="1">Administrador</option>
+                            <option value="2">Operador</option>
+                            <option value="3">Consulta</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Estado *</label>
+                        <select id="eu-estado">
+                            <option value="activo">Activo</option>
+                            <option value="inactivo">Inactivo</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-ghost" onclick="closeModal('modal-editar-usuario')">Cancelar</button>
+                <button class="btn btn-primary" onclick="guardarEdicionUsuario()">Guardar Cambios</button>
+            </div>
+        </div>
+    </div>
     <!-- ═══ MODAL: CAMBIAR CONTRASEÑA ═══ -->
     <div class="form-overlay" id="modal-contrasena">
         <div class="form-modal" style="width:400px">
@@ -1617,6 +1663,13 @@
                             <option value="1">Administrador</option>
                             <option value="2">Operador</option>
                             <option value="3">Consulta</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Estado *</label>
+                        <select id="u-estado">
+                            <option value="activo">Activo</option>
+                            <option value="inactivo">Inactivo</option>
                         </select>
                     </div>
                 </div>
@@ -1680,6 +1733,22 @@
         </div>
     </div>
 
+    <!-- ═══ MODAL: CONFIRMACIÓN ═══ -->
+    <div class="form-overlay" id="modal-confirmacion">
+        <div class="form-modal" style="width:380px">
+            <div class="modal-header">
+                <span class="modal-title">Confirmar acción</span>
+                <button class="modal-close" onclick="closeModal('modal-confirmacion')">✕</button>
+            </div>
+            <div class="modal-body">
+                <p id="confirm-mensaje" style="font-size:14px;color:var(--text2);line-height:1.6;"></p>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-ghost" onclick="closeModal('modal-confirmacion')">Cancelar</button>
+                <button class="btn btn-danger" id="confirm-btn-aceptar">Confirmar</button>
+            </div>
+        </div>
+    </div>
     <!-- TOAST -->
     <div class="toast" id="toast">
         <div class="toast-dot" id="toast-dot"></div>
@@ -1765,9 +1834,6 @@
             const btnNuevo = document.querySelector('button[onclick="openModal(\'modal-producto\')"]');
             if (btnNuevo) btnNuevo.style.display = (esAdmin || esOperador) ? '' : 'none';
 
-            // ── Botones Eliminar (✕ rojo) en tabla productos ──
-            // Se aplica también al cargar productos dinámicamente (ver cargarProductos)
-
             // ── Sección Categorías en sidebar ──
             const navCategorias = document.querySelector('.nav-item[data-view="categorias"]');
             if (navCategorias) navCategorias.style.display = esAdmin ? '' : 'none';
@@ -1776,13 +1842,16 @@
             const navUsuarios = document.querySelector('.nav-item[data-view="usuarios"]');
             if (navUsuarios) navUsuarios.style.display = esAdmin ? '' : 'none';
 
-            // ── Botón "Registrar Movimiento" ──
+            // ── Botón "Registrar Movimiento" en vista Movimientos ──
             const btnMovimiento = document.querySelector('button[onclick="openModal(\'modal-movimiento\')"]');
             if (btnMovimiento) btnMovimiento.style.display = (esAdmin || esOperador) ? '' : 'none';
 
-            // ── Botón "+ Nueva Categoría" ──
-            const btnCategoria = document.querySelector('button[onclick*="formulario de categoría"]');
-            if (btnCategoria) btnCategoria.style.display = esAdmin ? '' : 'none';
+            // ── Encabezado Acciones ──
+            const thAcciones = document.getElementById('th-acciones');
+            if (thAcciones) thAcciones.style.display = esConsulta ? 'none' : '';
+
+            // ── Guardar rol en variable global para usarlo en cargarProductos ──
+            window.rolActual = rol;
         }
 
         const titles = {
@@ -1811,10 +1880,17 @@
             if (name === 'usuarios') cargarUsuarios();
         }
 
-        function openModal(id) {
+        function openModal(id, cargarProductos = true) {
             document.getElementById(id).classList.add('open');
-            if (id === 'modal-movimiento') cargarProductosEnSelect();
+            if (id === 'modal-movimiento' && cargarProductos) cargarProductosEnSelect();
         }
+
+        async function abrirMovimiento(idProducto) {
+            await cargarProductosEnSelect();
+            document.getElementById('mov-producto').value = idProducto;
+            openModal('modal-movimiento', false);
+        }
+
         function closeModal(id) { document.getElementById(id).classList.remove('open'); }
 
         document.querySelectorAll('.form-overlay').forEach(o => {
@@ -1990,17 +2066,18 @@
                 tbody.innerHTML = usuarios.map(u => {
                     const estadoColor = u.estado === 'activo' ? 'var(--green)' : 'var(--text3)';
                     return `<tr>
-                      <td class="mono">${u.idUsuario}</td>
-                      <td class="bold">${u.nombre}</td>
-                      <td>${u.apellido}</td>
-                      <td class="mono">${u.email}</td>
-                      <td><span class="badge ok">${u.rol?.nombreRol || '—'}</span></td>
-                      <td><span style="color:${estadoColor};font-size:12px;font-weight:600">${u.estado || '—'}</span></td>
-                      <td><div style="display:flex;gap:5px">
-                        <button class="btn btn-ghost btn-sm" onclick="abrirCambioContrasena(${u.idUsuario}, '${u.nombre}')" title="Cambiar contraseña">🔑</button>
-                        <button class="btn btn-danger btn-sm" onclick="eliminarUsuario(${u.idUsuario})" title="Eliminar">✕</button>
-                      </div></td>
-                    </tr>`;
+                              <td class="mono">${u.idUsuario}</td>
+                              <td class="bold">${u.nombre}</td>
+                              <td>${u.apellido}</td>
+                              <td class="mono">${u.email}</td>
+                              <td><span class="badge ok">${u.rol?.nombreRol || '—'}</span></td>
+                              <td><span style="color:${estadoColor};font-size:12px;font-weight:600">${u.estado || '—'}</span></td>
+                              <td><div style="display:flex;gap:5px">
+                                <button class="btn btn-ghost btn-sm" onclick="abrirEditarUsuario(${u.idUsuario})" title="Editar">✏</button>
+                                <button class="btn btn-ghost btn-sm" onclick="abrirCambioContrasena(${u.idUsuario}, '${u.nombre}')" title="Cambiar contraseña">🔑</button>
+                                <button class="btn btn-danger btn-sm" onclick="eliminarUsuario(${u.idUsuario})" title="Eliminar">✕</button>
+                              </div></td>
+                            </tr>`;
                 }).join('');
             } catch (err) {
                 tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;color:var(--accent);padding:30px">⚠ Error conectando con la API</td></tr>`;
@@ -2027,7 +2104,7 @@
                         nombre, apellido, email,
                         contrasenaHash: contrasena,
                         idRol,
-                        estado: 'activo'
+                        estado: document.getElementById('u-estado').value
                     })
                 });
 
@@ -2044,6 +2121,7 @@
                     document.getElementById(id).value = '';
                 });
                 document.getElementById('u-rol').value = '';
+                document.getElementById('u-estado').value = 'activo';
 
                 cargarUsuarios();
 
@@ -2053,18 +2131,19 @@
         }
 
         async function eliminarUsuario(id) {
-            if (!confirm('¿Estás segura de eliminar este usuario?')) return;
-            try {
-                const res = await fetch(`${API}/Usuarios/${id}`, { method: 'DELETE' });
-                if (!res.ok) {
-                    showToast('Error al eliminar el usuario', 'red');
-                    return;
+            confirmar('¿Estás segura de eliminar este usuario? Esta acción no se puede deshacer.', async () => {
+                try {
+                    const res = await fetch(`${API}/Usuarios/${id}`, { method: 'DELETE' });
+                    if (!res.ok) {
+                        showToast('Error al eliminar el usuario', 'red');
+                        return;
+                    }
+                    showToast('Usuario eliminado', 'red');
+                    cargarUsuarios();
+                } catch (err) {
+                    showToast('Error conectando con la API', 'red');
                 }
-                showToast('Usuario eliminado', 'red');
-                cargarUsuarios();
-            } catch (err) {
-                showToast('Error conectando con la API', 'red');
-            }
+            });
         }
         // ═══ EDITAR PRODUCTO ═══
         async function abrirEditarProducto(id) {
@@ -2137,6 +2216,79 @@
                 showToast('Error conectando con la API', 'red');
             }
         }
+        // ═══ CONFIRMACIÓN ═══
+        function confirmar(mensaje, onAceptar) {
+            document.getElementById('confirm-mensaje').textContent = mensaje;
+            const btn = document.getElementById('confirm-btn-aceptar');
+            btn.onclick = () => {
+                closeModal('modal-confirmacion');
+                onAceptar();
+            };
+            openModal('modal-confirmacion');
+        }
+        // ═══ EDITAR USUARIO ═══
+        async function abrirEditarUsuario(id) {
+            try {
+                const res = await fetch(`${API}/Usuarios/${id}`);
+                const u = await res.json();
+
+                document.getElementById('eu-id').value = u.idUsuario;
+                document.getElementById('eu-nombre').value = u.nombre;
+                document.getElementById('eu-apellido').value = u.apellido;
+                document.getElementById('eu-email').value = u.email;
+                document.getElementById('eu-rol').value = u.idRol;
+                document.getElementById('eu-estado').value = u.estado || 'activo';
+
+                openModal('modal-editar-usuario');
+            } catch (err) {
+                showToast('Error al cargar el usuario', 'red');
+            }
+        }
+
+        async function guardarEdicionUsuario() {
+            const id = document.getElementById('eu-id').value;
+            const nombre = document.getElementById('eu-nombre').value.trim();
+            const apellido = document.getElementById('eu-apellido').value.trim();
+            const email = document.getElementById('eu-email').value.trim();
+            const idRol = parseInt(document.getElementById('eu-rol').value);
+            const estado = document.getElementById('eu-estado').value;
+
+            if (!nombre || !apellido || !email || !idRol) {
+                showToast('Completa todos los campos obligatorios', 'yellow');
+                return;
+            }
+
+            try {
+                const resGet = await fetch(`${API}/Usuarios/${id}`);
+                const usuarioActualData = await resGet.json();
+
+                const res = await fetch(`${API}/Usuarios/${id}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        ...usuarioActualData,
+                        nombre,
+                        apellido,
+                        email,
+                        idRol,
+                        estado,
+                        rol: undefined
+                    })
+                });
+
+                if (!res.ok) {
+                    showToast('Error al guardar los cambios', 'red');
+                    return;
+                }
+
+                closeModal('modal-editar-usuario');
+                showToast('Usuario actualizado correctamente', 'green');
+                cargarUsuarios();
+
+            } catch (err) {
+                showToast('Error conectando con la API', 'red');
+            }
+        }
         // ═══ CAMBIAR CONTRASEÑA ═══
         let usuarioACambiar = null;
 
@@ -2183,74 +2335,105 @@
         }
         // ═══ ELIMINAR PRODUCTO ═══
         async function eliminarProducto(id) {
-            if (!confirm('¿Estás segura de eliminar este producto?')) return;
-            try {
-                const res = await fetch(`${API}/Productos/${id}`, { method: 'DELETE' });
-                if (!res.ok) {
-                    showToast('Error al eliminar el producto', 'red');
-                    return;
+            confirmar('¿Estás segura de eliminar este producto? Esta acción no se puede deshacer.', async () => {
+                try {
+                    const res = await fetch(`${API}/Productos/${id}`, { method: 'DELETE' });
+                    if (!res.ok) {
+                        showToast('Error al eliminar el producto', 'red');
+                        return;
+                    }
+                    showToast('Producto eliminado', 'red');
+                    cargarProductos();
+                } catch (err) {
+                    showToast('Error conectando con la API', 'red');
                 }
-                showToast('Producto eliminado', 'red');
-                cargarProductos();
-            } catch (err) {
-                showToast('Error conectando con la API', 'red');
-            }
+            });
         }
+
+        // ═══ FILTRAR PRODUCTOS ═══
+        let todosLosProductos = [];
+
+        function filtrarProductos() {
+            const categoria = document.getElementById('filtro-categoria').value;
+            const estado = document.getElementById('filtro-estado').value;
+
+            let filtrados = todosLosProductos;
+
+            if (categoria) {
+                filtrados = filtrados.filter(p => p.idCategoria === parseInt(categoria));
+            }
+
+            if (estado) {
+                filtrados = filtrados.filter(p => {
+                    const stockClass = p.stockActual === 0 ? 'out' : p.stockActual < p.stockMinimo ? 'low' : 'ok';
+                    return stockClass === estado;
+                });
+            }
+
+            renderProductos(filtrados);
+        }
+
         // ═══ CARGAR PRODUCTOS DESDE API ═══
         async function cargarProductos() {
             const tbody = document.getElementById('tbody-productos');
             tbody.innerHTML = `<tr><td colspan="9" style="text-align:center;color:var(--text3);padding:30px">Cargando productos...</td></tr>`;
             try {
                 const res = await fetch(`${API}/Productos`);
-                const productos = await res.json();
-                if (productos.length === 0) {
-                    tbody.innerHTML = `<tr><td colspan="9" style="text-align:center;color:var(--text3);padding:30px">No hay productos registrados.</td></tr>`;
-                    return;
-                }
-                tbody.innerHTML = productos.map(p => {
-                    const stockPct = p.stockMinimo ? Math.min((p.stockActual / p.stockMinimo) * 100, 100) : 100;
-                    const stockClass = p.stockActual === 0 ? 'out' : p.stockActual < p.stockMinimo ? 'low' : 'ok';
-                    const badgeText = p.stockActual === 0 ? '✕ Agotado' : p.stockActual < p.stockMinimo ? '⚠ Bajo' : 'OK';
-                    const stockColor = stockClass === 'out' ? 'color:var(--accent)' : stockClass === 'low' ? 'color:var(--yellow)' : '';
-                    const precioCompra = p.precioCompra ? `$${p.precioCompra.toLocaleString('es-CO')}` : '—';
-                    return `<tr>
-                          <td class="mono">${p.codigoProducto}</td>
-                          <td class="bold">${p.nombre}</td>
-                          <td>${p.idCategoria}</td>
-                          <td class="mono">${p.ubicacionBodega || '—'}</td>
-                          <td><div class="stock-bar"><div class="stock-fill ${stockClass}" style="width:${stockPct}%"></div></div>
-                              <span class="mono" style="${stockColor}">${p.stockActual}</span></td>
-                          <td class="mono" style="color:var(--text3)">${precioCompra}</td>
-                          <td class="mono">$${p.precioUnitario.toLocaleString('es-CO')}</td>
-                          <td><span class="badge ${stockClass}">${badgeText}</span></td>
-                          <td><div style="display:flex;gap:5px">
-                            <button class="btn btn-ghost btn-sm" onclick="abrirEditarProducto(${p.idProducto})" title="Editar">✏</button>
-                            <button class="btn btn-ghost btn-sm" onclick="openModal('modal-movimiento')" title="Movimiento">↔</button>
-                            ${usuarioActual?.rol === 'Administrador' ? `<button class="btn btn-danger btn-sm" onclick="eliminarProducto(${p.idProducto})" title="Eliminar">✕</button>` : ''}
-                          </div></td>
-                        </tr>`;
-                }).join('');
+                todosLosProductos = await res.json();
+                renderProductos(todosLosProductos);
             } catch (err) {
                 tbody.innerHTML = `<tr><td colspan="9" style="text-align:center;color:var(--accent);padding:30px">⚠ Error conectando con la API</td></tr>`;
             }
         }
 
+        function renderProductos(productos) {
+            const tbody = document.getElementById('tbody-productos');
+            if (productos.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="9" style="text-align:center;color:var(--text3);padding:30px">No hay productos que coincidan con los filtros.</td></tr>`;
+                return;
+            }
+            tbody.innerHTML = productos.map(p => {
+                const stockPct = p.stockMinimo ? Math.min((p.stockActual / p.stockMinimo) * 100, 100) : 100;
+                const stockClass = p.stockActual === 0 ? 'out' : p.stockActual < p.stockMinimo ? 'low' : 'ok';
+                const badgeText = p.stockActual === 0 ? '✕ Agotado' : p.stockActual < p.stockMinimo ? '⚠ Bajo' : 'OK';
+                const stockColor = stockClass === 'out' ? 'color:var(--accent)' : stockClass === 'low' ? 'color:var(--yellow)' : '';
+                const precioCompra = p.precioCompra ? `$${p.precioCompra.toLocaleString('es-CO')}` : '—';
+                return `<tr>
+        <td class="mono">${p.codigoProducto}</td>
+        <td class="bold">${p.nombre}</td>
+        <td>${p.idCategoria}</td>
+        <td class="mono">${p.ubicacionBodega || '—'}</td>
+        <td><div class="stock-bar"><div class="stock-fill ${stockClass}" style="width:${stockPct}%"></div></div>
+            <span class="mono" style="${stockColor}">${p.stockActual}</span></td>
+        <td class="mono" style="color:var(--text3)">${precioCompra}</td>
+        <td class="mono">$${p.precioUnitario.toLocaleString('es-CO')}</td>
+        <td><span class="badge ${stockClass}">${badgeText}</span></td>
+        <td><div style="display:flex;gap:5px">
+          ${window.rolActual !== 'Consulta' ? `<button class="btn btn-ghost btn-sm" onclick="abrirEditarProducto(${p.idProducto})" title="Editar">✏</button>` : ''}
+          ${window.rolActual !== 'Consulta' ? `<button class="btn btn-ghost btn-sm" onclick="abrirMovimiento(${p.idProducto})" title="Movimiento">↔</button>` : ''}
+          ${window.rolActual === 'Administrador' ? `<button class="btn btn-danger btn-sm" onclick="eliminarProducto(${p.idProducto})">✕ Eliminar</button>` : ''}
+        </div></td>
+      </tr>`;
+            }).join('');
+        }
+
         // ═══ CERRWAQR SESION ═══
         function cerrarSesion() {
-            if (!confirm('¿Cerrar sesión?')) return;
-            usuarioActual = null;
-            switchView('dashboard');
-            document.getElementById('login-email').value = '';
-            document.getElementById('login-pass').value = '';
-            document.getElementById('login-btn').textContent = 'Ingresar al Sistema';
-            document.getElementById('login-btn').style.opacity = '1';
-            document.getElementById('login-btn').style.cursor = 'pointer';
-            document.getElementById('login-error').style.display = 'none';
-            const loginScreen = document.getElementById('login-screen');
-            loginScreen.style.display = 'flex';
-            loginScreen.style.opacity = '0';
-            setTimeout(() => loginScreen.style.opacity = '1', 10);
-            loginScreen.style.transition = 'opacity .3s ease';
+            confirmar('¿Estás segura de que deseas cerrar sesión?', () => {
+                usuarioActual = null;
+                switchView('dashboard');
+                document.getElementById('login-email').value = '';
+                document.getElementById('login-pass').value = '';
+                document.getElementById('login-btn').textContent = 'Ingresar al Sistema';
+                document.getElementById('login-btn').style.opacity = '1';
+                document.getElementById('login-btn').style.cursor = 'pointer';
+                document.getElementById('login-error').style.display = 'none';
+                const loginScreen = document.getElementById('login-screen');
+                loginScreen.style.display = 'flex';
+                loginScreen.style.opacity = '0';
+                setTimeout(() => loginScreen.style.opacity = '1', 10);
+                loginScreen.style.transition = 'opacity .3s ease';
+            });
         }
     </script>
 </body>
