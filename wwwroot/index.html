@@ -1147,9 +1147,9 @@
             <div class="view" id="view-movimientos">
                 <div class="section-header">
                     <div class="type-tabs">
-                        <div class="type-tab active all" id="tab-todos" onclick="setTab('todos')">Todos</div>
-                        <div class="type-tab" id="tab-entradas" onclick="setTab('entradas')">▲ Entradas</div>
-                        <div class="type-tab" id="tab-salidas" onclick="setTab('salidas')">▼ Salidas</div>
+                        <div class="type-tab active all" id="tab-todos" onclick="setTab('todos');filtrarMovimientos('todos')">Todos</div>
+                        <div class="type-tab" id="tab-entradas" onclick="setTab('entradas');filtrarMovimientos('entrada')">▲ Entradas</div>
+                        <div class="type-tab" id="tab-salidas" onclick="setTab('salidas');filtrarMovimientos('salida')">▼ Salidas</div>
                     </div>
                     <div style="display:flex;gap:8px;margin-left:auto">
                         <button class="btn btn-ghost btn-sm">📅 Feb 2026</button>
@@ -2418,6 +2418,10 @@
         }
 
         // ═══ CARGAR MOVIMIENTOS DESDE API ═══
+        // ═══ CARGAR MOVIMIENTOS DESDE API ═══
+        let todosLosMovimientos = [];
+        let mapaUsuariosGlobal = {};
+
         async function cargarMovimientos() {
             const tbody = document.querySelector('#view-movimientos table tbody');
             tbody.innerHTML = `<tr><td colspan="8" style="text-align:center;color:var(--text3);padding:30px">Cargando movimientos...</td></tr>`;
@@ -2426,36 +2430,50 @@
                     fetch(`${API}/Movimientos`),
                     fetch(`${API}/Usuarios`)
                 ]);
-                const movimientos = await resM.json();
+                todosLosMovimientos = await resM.json();
                 const usuarios = await resU.json();
-                const mapaUsuarios = {};
-                usuarios.forEach(u => mapaUsuarios[u.idUsuario] = u.nombre + ' ' + u.apellido);
-                if (movimientos.length === 0) {
-                    tbody.innerHTML = `<tr><td colspan="8" style="text-align:center;color:var(--text3);padding:30px">No hay movimientos registrados.</td></tr>`;
-                    return;
-                }
-                tbody.innerHTML = movimientos.map(m => {
-                    const fecha = new Date(m.fechaMovimiento).toLocaleDateString('es-CO', {
-                        day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit'
-                    });
-                    const eEntrada = m.tipoMovimiento === 'entrada';
-                    const badgeClass = eEntrada ? 'in' : 'out';
-                    const badgeText = eEntrada ? '▲ Entrada' : '▼ Salida';
-                    const cantColor = eEntrada ? 'color:var(--green)' : 'color:var(--accent)';
-                    const cantPrefix = eEntrada ? '+' : '-';
-                    return `<tr>
-          <td class="mono">${fecha}</td>
-          <td><span class="badge ${badgeClass}">${badgeText}</span></td>
-          <td class="bold">${m.producto?.nombre || '—'}</td>
-          <td class="mono" style="${cantColor}">${cantPrefix}${m.cantidad}</td>
-          <td class="mono">${m.stockAntes} → ${m.stockDespues}</td>
-          <td>${m.motivo || '—'}</td>
-          <td class="mono">${m.referenciaDocumento || '—'}</td>
-          <td>${mapaUsuarios[m.idUsuario] || m.idUsuario}</td>
-        </tr>`;
-                }).join('');
+                mapaUsuariosGlobal = {};
+                usuarios.forEach(u => mapaUsuariosGlobal[u.idUsuario] = u.nombre + ' ' + u.apellido);
+                renderMovimientos(todosLosMovimientos);
             } catch (err) {
                 tbody.innerHTML = `<tr><td colspan="8" style="text-align:center;color:var(--accent);padding:30px">⚠ Error conectando con la API</td></tr>`;
+            }
+        }
+
+        function renderMovimientos(movimientos) {
+            const tbody = document.querySelector('#view-movimientos table tbody');
+            if (movimientos.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="8" style="text-align:center;color:var(--text3);padding:30px">No hay movimientos registrados.</td></tr>`;
+                return;
+            }
+            tbody.innerHTML = movimientos.map(m => {
+                const fecha = new Date(m.fechaMovimiento).toLocaleDateString('es-CO', {
+                    day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit'
+                });
+                const eEntrada = m.tipoMovimiento === 'entrada';
+                const badgeClass = eEntrada ? 'in' : 'out';
+                const badgeText = eEntrada ? '▲ Entrada' : '▼ Salida';
+                const cantColor = eEntrada ? 'color:var(--green)' : 'color:var(--accent)';
+                const cantPrefix = eEntrada ? '+' : '-';
+                return `<tr>
+                    <td class="mono">${fecha}</td>
+                    <td><span class="badge ${badgeClass}">${badgeText}</span></td>
+                    <td class="bold">${m.producto?.nombre || '—'}</td>
+                    <td class="mono" style="${cantColor}">${cantPrefix}${m.cantidad}</td>
+                    <td class="mono">${m.stockAntes} → ${m.stockDespues}</td>
+                    <td>${m.motivo || '—'}</td>
+                    <td class="mono">${m.referenciaDocumento || '—'}</td>
+                    <td>${mapaUsuariosGlobal[m.idUsuario] || m.idUsuario}</td>
+                  </tr>`;
+                        }).join('');
+                    }
+
+        function filtrarMovimientos(tipo) {
+            if (tipo === 'todos') {
+                renderMovimientos(todosLosMovimientos);
+            } else {
+                const filtrados = todosLosMovimientos.filter(m => m.tipoMovimiento === tipo);
+                renderMovimientos(filtrados);
             }
         }
 
