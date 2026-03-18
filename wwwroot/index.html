@@ -1152,7 +1152,12 @@
                         <div class="type-tab" id="tab-salidas" onclick="setTab('salidas');filtrarMovimientos('salida')">▼ Salidas</div>
                     </div>
                     <div style="display:flex;gap:8px;margin-left:auto">
-                        <button class="btn btn-ghost btn-sm">📅 Feb 2026</button>
+                        <input type="date" id="filtro-fecha-inicio" class="filter-select"
+                               style="padding:7px 12px;font-family:'Barlow',sans-serif;"
+                               onchange="filtrarMovimientosPorFecha()">
+                        <input type="date" id="filtro-fecha-fin" class="filter-select"
+                               style="padding:7px 12px;font-family:'Barlow',sans-serif;"
+                               onchange="filtrarMovimientosPorFecha()">
                         <button class="btn btn-ghost btn-sm">Exportar</button>
                         <button class="btn btn-primary" onclick="openModal('modal-movimiento')">
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="width:13px;height:13px"><path d="M12 5v14M5 12h14" /></svg>
@@ -2466,15 +2471,43 @@
                     <td>${mapaUsuariosGlobal[m.idUsuario] || m.idUsuario}</td>
                   </tr>`;
                         }).join('');
-                    }
+        }
+        function filtrarMovimientosPorFecha() {
+            const inicio = document.getElementById('filtro-fecha-inicio').value;
+            const fin = document.getElementById('filtro-fecha-fin').value;
+
+            let filtrados = todosLosMovimientos;
+
+            if (inicio) {
+                filtrados = filtrados.filter(m => new Date(m.fechaMovimiento) >= new Date(inicio));
+            }
+            if (fin) {
+                const finDia = new Date(fin);
+                finDia.setHours(23, 59, 59);
+                filtrados = filtrados.filter(m => new Date(m.fechaMovimiento) <= finDia);
+            }
+
+            renderMovimientos(filtrados);
+        }
 
         function filtrarMovimientos(tipo) {
-            if (tipo === 'todos') {
-                renderMovimientos(todosLosMovimientos);
-            } else {
-                const filtrados = todosLosMovimientos.filter(m => m.tipoMovimiento === tipo);
-                renderMovimientos(filtrados);
+            const inicio = document.getElementById('filtro-fecha-inicio').value;
+            const fin = document.getElementById('filtro-fecha-fin').value;
+
+            let filtrados = tipo === 'todos'
+                ? todosLosMovimientos
+                : todosLosMovimientos.filter(m => m.tipoMovimiento === tipo);
+
+            if (inicio) {
+                filtrados = filtrados.filter(m => new Date(m.fechaMovimiento) >= new Date(inicio));
             }
+            if (fin) {
+                const finDia = new Date(fin);
+                finDia.setHours(23, 59, 59);
+                filtrados = filtrados.filter(m => new Date(m.fechaMovimiento) <= finDia);
+            }
+
+            renderMovimientos(filtrados);
         }
 
         // ═══ FILTRAR PRODUCTOS ═══
