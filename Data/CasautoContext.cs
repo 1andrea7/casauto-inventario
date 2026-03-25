@@ -12,6 +12,7 @@ namespace CasautoAPI.Data
         public DbSet<Usuario> Usuarios { get; set; }
         public DbSet<Producto> Productos { get; set; }
         public DbSet<MovimientoInventario> MovimientosInventario { get; set; }
+        public DbSet<Categoria> Categorias { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -73,6 +74,14 @@ namespace CasautoAPI.Data
             modelBuilder.Entity<MovimientoInventario>().Property(m => m.FechaMovimiento).HasColumnName("fecha_movimiento");
             modelBuilder.Entity<MovimientoInventario>().HasOne(m => m.Producto).WithMany().HasForeignKey(m => m.IdProducto);
             modelBuilder.Entity<MovimientoInventario>().HasOne(m => m.Usuario).WithMany().HasForeignKey(m => m.IdUsuario);
+
+            // Tabla CATEGORIA
+            modelBuilder.Entity<Categoria>().ToTable("CATEGORIA");
+            modelBuilder.Entity<Categoria>().HasKey(c => c.IdCategoria);
+            modelBuilder.Entity<Categoria>().Property(c => c.IdCategoria).HasColumnName("id_categoria");
+            modelBuilder.Entity<Categoria>().Property(c => c.NombreCategoria).HasColumnName("nombre_categoria");
+            modelBuilder.Entity<Categoria>().Property(c => c.Descripcion).HasColumnName("descripcion");
+            modelBuilder.Entity<Categoria>().Property(c => c.FechaCreacion).HasColumnName("fecha_creacion");
         }
     }
 }
