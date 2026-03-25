@@ -1163,6 +1163,7 @@
                         <input type="date" id="filtro-fecha-fin" class="filter-select"
                                style="padding:7px 12px;font-family:'Barlow',sans-serif;"
                                onchange="filtrarMovimientosPorFecha()">
+                        
                         <button class="btn btn-ghost btn-sm">Exportar</button>
                         <button class="btn btn-primary" onclick="openModal('modal-movimiento')">
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="width:13px;height:13px"><path d="M12 5v14M5 12h14" /></svg>
@@ -1868,6 +1869,11 @@
             if (name === 'productos') cargarProductos();
             if (name === 'usuarios') cargarUsuarios();
             if (name === 'movimientos') cargarMovimientos();
+            document.getElementById('buscador-productos').value = '';
+            document.getElementById('buscador-productos').placeholder =
+                name === 'movimientos' ? 'Buscar movimiento...' : 'Buscar producto, código...';
+            document.getElementById('buscador-productos').oninput =
+                name === 'movimientos' ? (e) => buscarMovimientos(e.target.value) : (e) => buscarProductos(e.target.value);
             if (name === 'alertas') cargarAlertas();
             if (name === 'categorias') cargarCategorias();
             if (name === 'dashboard') cargarDashboard();
@@ -2727,6 +2733,20 @@
                 filtrados = filtrados.filter(m => new Date(m.fechaMovimiento) <= finDia);
             }
 
+            renderMovimientos(filtrados);
+        }
+        // ═══ BUSCADOR DE MOVIMIENTOS ═══
+        function buscarMovimientos(texto) {
+            if (!texto.trim()) {
+                renderMovimientos(todosLosMovimientos);
+                return;
+            }
+            const txtLower = texto.toLowerCase();
+            const filtrados = todosLosMovimientos.filter(m =>
+                m.producto?.nombre.toLowerCase().includes(txtLower) ||
+                (m.motivo && m.motivo.toLowerCase().includes(txtLower)) ||
+                (m.referenciaDocumento && m.referenciaDocumento.toLowerCase().includes(txtLower))
+            );
             renderMovimientos(filtrados);
         }
         // ═══ BUSCADOR DE PRODUCTOS ═══
