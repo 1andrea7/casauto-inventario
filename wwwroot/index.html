@@ -2129,6 +2129,23 @@
                     : `$${d.valorInventario.toLocaleString('es-CO')}`;
                 document.querySelector('.kpi.k4 .kpi-value').textContent = valorM;
 
+                // Gráfico de movimientos por categoría
+                const resGraf = await fetch(`${API}/Dashboard/movimientos-categoria`);
+                const grafData = await resGraf.json();
+                const maxVal = Math.max(...grafData.map(g => g.total), 1);
+                const miniChart = document.querySelector('.mini-chart');
+                if (miniChart && grafData.length > 0) {
+                    const colores = ['var(--accent)', '#cc3333', 'var(--green)', 'var(--blue)', 'var(--yellow)', '#888'];
+                    miniChart.innerHTML = grafData.map((g, i) => `
+                      <div class="bar-row">
+                        <div class="bar-label">${g.nombre}</div>
+                        <div class="bar-track">
+                          <div class="bar-fill" style="width:${Math.round((g.total / maxVal) * 100)}%; background:${colores[i % colores.length]}"></div>
+                        </div>
+                        <div class="bar-val">${g.total} uds</div>
+                      </div>`).join('');
+                }
+
                 // Últimos movimientos
                 const actList = document.querySelector('.activity-list');
                 if (d.ultimosMovimientos.length > 0) {

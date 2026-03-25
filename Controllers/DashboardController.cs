@@ -91,5 +91,29 @@ namespace CasautoAPI.Controllers
 
             return Ok(new { criticos, advertencias });
         }
+        [HttpGet("movimientos-categoria")]
+        public async Task<IActionResult> GetMovimientosPorCategoria()
+        {
+            var hace7dias = DateTime.Today.AddDays(-7);
+
+            var datos = await _context.MovimientosInventario
+                .Where(m => m.FechaMovimiento >= hace7dias)
+                .Include(m => m.Producto)
+                .GroupBy(m => m.Producto.IdCategoria)
+                .Select(g => new {
+                    idCategoria = g.Key,
+                    total = g.Sum(m => m.Cantidad)
+                })
+                .ToListAsync();
+
+            var categorias = await _context.Categorias.ToListAsync();
+
+            var resultado = categorias.Select(c => new {
+                nombre = c.NombreCategoria,
+                total = datos.FirstOrDefault(d => d.idCategoria == c.IdCategoria)?.total ?? 0
+            }).OrderByDescending(x => x.total).ToList();
+
+            return Ok(resultado);
+        }
     }
 }
