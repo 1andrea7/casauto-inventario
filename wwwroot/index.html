@@ -1241,92 +1241,19 @@
                             <div style="width:8px;height:8px;background:var(--accent);border-radius:50%;animation:pulse 1.2s infinite;flex-shrink:0"></div>
                             <h2>Críticos</h2>
                         </div>
-                        <div style="display:flex;flex-direction:column;gap:10px">
-                            <div class="card">
-                                <div class="card-body">
-                                    <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
-                                        <div class="alert-dot" style="background:var(--accent);animation:pulse 1s infinite"></div>
-                                        <span style="font-weight:700;flex:1;color:var(--text)">Batería 65AH Bosch S4</span>
-                                        <span class="badge out">Sin Stock</span>
-                                    </div>
-                                    <div style="font-size:12px;color:var(--text3);margin-bottom:12px">
-                                        Código: BAT-003 &nbsp;·&nbsp; Mínimo: 3 &nbsp;·&nbsp; Actual: <strong style="color:var(--accent)">0</strong>
-                                    </div>
-                                    <div class="stock-bar" style="width:100%;display:block;height:5px;margin-bottom:12px">
-                                        <div class="stock-fill out" style="width:0%"></div>
-                                    </div>
-                                    <div style="display:flex;gap:8px">
-                                        <button class="btn btn-primary btn-sm" onclick="showToast('Abriendo registro de entrada...','red')">Registrar Entrada</button>
-                                        <button class="btn btn-ghost btn-sm">Ver producto</button>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="card">
-                                <div class="card-body">
-                                    <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
-                                        <div class="alert-dot" style="background:var(--accent);animation:pulse 1s infinite"></div>
-                                        <span style="font-weight:700;flex:1;color:var(--text)">Correa Gates K015564XS</span>
-                                        <span class="badge out">Crítico</span>
-                                    </div>
-                                    <div style="font-size:12px;color:var(--text3);margin-bottom:12px">
-                                        Código: COR-002 &nbsp;·&nbsp; Mínimo: 5 &nbsp;·&nbsp; Actual: <strong style="color:var(--accent)">1</strong>
-                                    </div>
-                                    <div class="stock-bar" style="width:100%;display:block;height:5px;margin-bottom:12px">
-                                        <div class="stock-fill out" style="width:8%"></div>
-                                    </div>
-                                    <div style="display:flex;gap:8px">
-                                        <button class="btn btn-primary btn-sm" onclick="showToast('Abriendo registro de entrada...','red')">Registrar Entrada</button>
-                                        <button class="btn btn-ghost btn-sm">Ver producto</button>
-                                    </div>
-                                </div>
-                            </div>
+                        <div id="alertas-criticos" style="display:flex;flex-direction:column;gap:10px">
                         </div>
                     </div>
-
                     <div>
                         <div class="section-header">
                             <div style="width:8px;height:8px;background:var(--yellow);border-radius:50%;animation:pulse 2s infinite;flex-shrink:0"></div>
                             <h2>Advertencia</h2>
                         </div>
-                        <div style="display:flex;flex-direction:column;gap:10px">
-                            <div class="card">
-                                <div class="card-body">
-                                    <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
-                                        <div class="alert-dot" style="background:var(--yellow);animation:pulse 2s infinite"></div>
-                                        <span style="font-weight:700;flex:1;color:var(--text);font-size:13px">Filtro Aceite Purolator L14459</span>
-                                        <span class="badge low">Stock Bajo</span>
-                                    </div>
-                                    <div style="font-size:11px;color:var(--text3);margin-bottom:8px">FIL-020 · Mín: 8 · Actual: <strong style="color:var(--yellow)">3</strong></div>
-                                    <div class="stock-bar" style="width:100%;display:block;height:5px"><div class="stock-fill low" style="width:37%"></div></div>
-                                </div>
-                            </div>
-                            <div class="card">
-                                <div class="card-body">
-                                    <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
-                                        <div class="alert-dot" style="background:var(--yellow);animation:pulse 2s infinite"></div>
-                                        <span style="font-weight:700;flex:1;color:var(--text);font-size:13px">Refrigerante PEAK 50/50 1Gal</span>
-                                        <span class="badge low">Stock Bajo</span>
-                                    </div>
-                                    <div style="font-size:11px;color:var(--text3);margin-bottom:8px">LIQ-005 · Mín: 10 · Actual: <strong style="color:var(--yellow)">4</strong></div>
-                                    <div class="stock-bar" style="width:100%;display:block;height:5px"><div class="stock-fill low" style="width:40%"></div></div>
-                                </div>
-                            </div>
-                            <div class="card">
-                                <div class="card-body">
-                                    <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
-                                        <div class="alert-dot" style="background:var(--yellow);animation:pulse 2s infinite"></div>
-                                        <span style="font-weight:700;flex:1;color:var(--text);font-size:13px">Bujías NGK Platinum BKR6EGP</span>
-                                        <span class="badge low">Stock Bajo</span>
-                                    </div>
-                                    <div style="font-size:11px;color:var(--text3);margin-bottom:8px">BUJ-011 · Mín: 12 · Actual: <strong style="color:var(--yellow)">5</strong></div>
-                                    <div class="stock-bar" style="width:100%;display:block;height:5px"><div class="stock-fill low" style="width:42%"></div></div>
-                                </div>
-                            </div>
+                        <div id="alertas-advertencias" style="display:flex;flex-direction:column;gap:10px">
                         </div>
                     </div>
                 </div>
             </div>
-
             <!-- ═══ CATEGORÍAS ═══ -->
             <div class="view" id="view-categorias">
                 <div class="section-header">
@@ -1890,6 +1817,7 @@
             if (name === 'productos') cargarProductos();
             if (name === 'usuarios') cargarUsuarios();
             if (name === 'movimientos') cargarMovimientos();
+            if (name === 'alertas') cargarAlertas();
             if (name === 'dashboard') cargarDashboard();
         }
 
@@ -1941,6 +1869,73 @@
             text.textContent = msg;
             toast.classList.add('show');
             setTimeout(() => toast.classList.remove('show'), 3000);
+        }
+        // ═══ ALERTAS DE STOCK ═══
+        async function cargarAlertas() {
+            try {
+                const res = await fetch(`${API}/Dashboard/alertas`);
+                const d = await res.json();
+
+                // Críticos
+                const criticos = document.getElementById('alertas-criticos');
+                if (d.criticos.length === 0) {
+                    criticos.innerHTML = `<div style="font-size:13px;color:var(--text3);padding:10px">No hay productos críticos.</div>`;
+                } else {
+                    criticos.innerHTML = d.criticos.map(p => `
+          <div class="card">
+            <div class="card-body">
+              <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
+                <div class="alert-dot" style="background:var(--accent);animation:pulse 1s infinite"></div>
+                <span style="font-weight:700;flex:1;color:var(--text)">${p.nombre}</span>
+                <span class="badge out">Sin Stock</span>
+              </div>
+              <div style="font-size:12px;color:var(--text3);margin-bottom:12px">
+                Stock mínimo: ${p.stockMinimo} · Actual: <strong style="color:var(--accent)">${p.stockActual}</strong>
+              </div>
+              <div class="stock-bar" style="width:100%;display:block;height:5px;margin-bottom:12px">
+                <div class="stock-fill out" style="width:0%"></div>
+              </div>
+              <div style="display:flex;gap:8px">
+                <button class="btn btn-primary btn-sm" onclick="abrirMovimiento(${p.idProducto})">Registrar Entrada</button>
+              </div>
+            </div>
+          </div>`).join('');
+                }
+
+                // Advertencias
+                const advertencias = document.getElementById('alertas-advertencias');
+                if (d.advertencias.length === 0) {
+                    advertencias.innerHTML = `<div style="font-size:13px;color:var(--text3);padding:10px">No hay advertencias.</div>`;
+                } else {
+                    advertencias.innerHTML = d.advertencias.map(p => {
+                        const pct = Math.min((p.stockActual / p.stockMinimo) * 100, 100);
+                        return `
+          <div class="card">
+            <div class="card-body">
+              <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
+                <div class="alert-dot" style="background:var(--yellow);animation:pulse 2s infinite"></div>
+                <span style="font-weight:700;flex:1;color:var(--text);font-size:13px">${p.nombre}</span>
+                <span class="badge low">Stock Bajo</span>
+              </div>
+              <div style="font-size:11px;color:var(--text3);margin-bottom:8px">
+                Mín: ${p.stockMinimo} · Actual: <strong style="color:var(--yellow)">${p.stockActual}</strong>
+              </div>
+              <div class="stock-bar" style="width:100%;display:block;height:5px">
+                <div class="stock-fill low" style="width:${pct}%"></div>
+              </div>
+            </div>
+          </div>`;
+                    }).join('');
+                }
+
+                // Actualizar badge del sidebar
+                const total = d.criticos.length + d.advertencias.length;
+                const badge = document.querySelector('.nav-item[data-view="alertas"] .nav-badge');
+                if (badge) badge.textContent = total;
+
+            } catch (err) {
+                console.error('Error cargando alertas:', err);
+            }
         }
         // ═══ DASHBOARD ═══
         async function cargarDashboard() {

@@ -75,5 +75,21 @@ namespace CasautoAPI.Controllers
                 })
             });
         }
+
+        [HttpGet("alertas")]
+        public async Task<IActionResult> GetAlertas()
+        {
+            var criticos = await _context.Productos
+                .Where(p => p.Estado == "activo" && p.StockActual == 0)
+                .OrderBy(p => p.Nombre)
+                .ToListAsync();
+
+            var advertencias = await _context.Productos
+                .Where(p => p.Estado == "activo" && p.StockActual > 0 && p.StockActual < p.StockMinimo)
+                .OrderBy(p => p.StockActual)
+                .ToListAsync();
+
+            return Ok(new { criticos, advertencias });
+        }
     }
 }
