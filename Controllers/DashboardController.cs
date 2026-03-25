@@ -115,5 +115,21 @@ namespace CasautoAPI.Controllers
 
             return Ok(resultado);
         }
+        [HttpGet("estado-inventario")]
+        public async Task<IActionResult> GetEstadoInventario()
+        {
+            var total = await _context.Productos
+                .Where(p => p.Estado == "activo").CountAsync();
+
+            var sinStock = await _context.Productos
+                .Where(p => p.Estado == "activo" && p.StockActual == 0).CountAsync();
+
+            var stockBajo = await _context.Productos
+                .Where(p => p.Estado == "activo" && p.StockActual > 0 && p.StockActual < p.StockMinimo).CountAsync();
+
+            var stockOk = total - sinStock - stockBajo;
+
+            return Ok(new { total, stockOk, stockBajo, sinStock });
+        }
     }
 }

@@ -2128,7 +2128,34 @@
                     ? `$${(d.valorInventario / 1000000).toFixed(1)}M`
                     : `$${d.valorInventario.toLocaleString('es-CO')}`;
                 document.querySelector('.kpi.k4 .kpi-value').textContent = valorM;
+                // Donut chart estado inventario
+                const resDonut = await fetch(`${API}/Dashboard/estado-inventario`);
+                const donut = await resDonut.json();
 
+                // Actualizar números del donut
+                const legendItems = document.querySelectorAll('.donut-legend .legend-item');
+                if (legendItems.length >= 3) {
+                    legendItems[0].innerHTML = `<div class="legend-dot" style="background:var(--green)"></div>Stock OK — ${donut.stockOk} refs`;
+                    legendItems[1].innerHTML = `<div class="legend-dot" style="background:var(--yellow)"></div>Stock Bajo — ${donut.stockBajo} refs`;
+                    legendItems[2].innerHTML = `<div class="legend-dot" style="background:var(--accent)"></div>Sin Stock — ${donut.sinStock} refs`;
+                }
+
+                // Actualizar número central del donut
+                const donutText = document.querySelector('.donut-wrap svg text');
+                if (donutText) donutText.textContent = donut.total;
+
+                // Actualizar segmentos del donut
+                const pctOk = donut.total > 0 ? Math.round((donut.stockOk / donut.total) * 100) : 0;
+                const pctBajo = donut.total > 0 ? Math.round((donut.stockBajo / donut.total) * 100) : 0;
+                const pctSin = donut.total > 0 ? Math.round((donut.sinStock / donut.total) * 100) : 0;
+                const circles = document.querySelectorAll('.donut-wrap svg circle');
+                if (circles.length >= 4) {
+                    circles[1].setAttribute('stroke-dasharray', `${pctOk} ${100 - pctOk}`);
+                    circles[2].setAttribute('stroke-dasharray', `${pctBajo} ${100 - pctBajo}`);
+                    circles[2].setAttribute('stroke-dashoffset', `${-(pctOk)}`);
+                    circles[3].setAttribute('stroke-dasharray', `${pctSin} ${100 - pctSin}`);
+                    circles[3].setAttribute('stroke-dashoffset', `${-(pctOk + pctBajo)}`);
+                }
                 // Gráfico de movimientos por categoría
                 const resGraf = await fetch(`${API}/Dashboard/movimientos-categoria`);
                 const grafData = await resGraf.json();
