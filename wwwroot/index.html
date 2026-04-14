@@ -1167,9 +1167,9 @@
                         <option value="out">Sin Stock</option>
                     </select>
                     <div class="filters-right">
-                        <button class="btn btn-ghost btn-sm">
+                        <button class="btn btn-ghost btn-sm" onclick="exportarProductosExcel()">
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:13px;height:13px"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3" /></svg>
-                            Exportar
+                            Excel
                         </button>
                         <button class="btn btn-primary" onclick="openModal('modal-producto')">
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14M5 12h14" /></svg>
@@ -1224,7 +1224,10 @@
                                style="padding:7px 12px;font-family:'Barlow',sans-serif;"
                                onchange="filtrarMovimientosPorFecha()">
 
-                        <button class="btn btn-ghost btn-sm">Exportar</button>
+                        <button class="btn btn-ghost btn-sm" onclick="exportarMovimientosExcel()">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:13px;height:13px"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3" /></svg>
+                            Excel
+                        </button>
                         <button class="btn btn-primary" onclick="openModal('modal-movimiento')">
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="width:13px;height:13px"><path d="M12 5v14M5 12h14" /></svg>
                             Registrar Movimiento
@@ -2540,7 +2543,84 @@
             paginaUsuarios = pagina;
             renderUsuarios(todosLosUsuarios);
         }
+        function exportarMovimientosExcel() {
+            const datos = movimientosFiltradosActuales.length > 0 ? movimientosFiltradosActuales : todosLosMovimientos;
+            if (!datos || datos.length === 0) {
+                showToast('No hay movimientos para exportar', 'yellow');
+                return;
+            }
 
+            const encabezados = ['Fecha', 'Tipo', 'Producto', 'Cantidad', 'Stock Antes', 'Stock Después', 'Motivo', 'Referencia', 'Usuario'];
+
+            const filas = datos.map(m => {
+                const fecha = new Date(m.fechaMovimiento).toLocaleDateString('es-CO', {
+                    day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit'
+                });
+                const esEntrada = m.tipoMovimiento === 'entrada';
+                return [
+                    fecha,
+                    esEntrada ? 'Entrada' : 'Salida',
+                    m.producto?.nombre || '—',
+                    esEntrada ? `+${m.cantidad}` : `-${m.cantidad}`,
+                    m.stockAntes,
+                    m.stockDespues,
+                    m.motivo || '—',
+                    m.referenciaDocumento || '—',
+                    mapaUsuariosGlobal[m.idUsuario] || m.idUsuario
+                ];
+            });
+
+            const csvContent = [encabezados, ...filas]
+                .map(fila => fila.map(val => `"${val}"`).join(';'))
+                .join('\n');
+
+            const blob = new Blob(['\uFEFF' + csvContent], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `Movimientos_Casauto_${new Date().toLocaleDateString('es-CO').replace(/\//g, '-')}.csv`;
+            link.click();
+            URL.revokeObjectURL(url);
+            showToast('Exportación exitosa', 'green');
+        }
+
+        function exportarProductosExcel() {
+            const datos = window._productosFiltrados || todosLosProductos;
+            if (!datos || datos.length === 0) {
+                showToast('No hay productos para exportar', 'yellow');
+                return;
+            }
+
+            const encabezados = ['Código', 'Producto', 'Categoría', 'Bodega', 'Stock Actual', 'Stock Mínimo', 'Precio Compra', 'Precio Unitario', 'Estado'];
+
+            const filas = datos.map(p => {
+                const stockClass = p.stockActual === 0 ? 'Sin Stock' : p.stockActual < p.stockMinimo ? 'Stock Bajo' : 'OK';
+                return [
+                    p.codigoProducto,
+                    p.nombre,
+                    window.mapaCategorias?.[p.idCategoria] || p.idCategoria,
+                    p.ubicacionBodega || '—',
+                    p.stockActual,
+                    p.stockMinimo,
+                    p.precioCompra ? `$${p.precioCompra.toLocaleString('es-CO')}` : '$0',
+                    `$${p.precioUnitario.toLocaleString('es-CO')}`,
+                    stockClass
+                ];
+            });
+
+            const csvContent = [encabezados, ...filas]
+                .map(fila => fila.map(val => `"${val}"`).join(';'))
+                .join('\n');
+
+            const blob = new Blob(['\uFEFF' + csvContent], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `Productos_Casauto_${new Date().toLocaleDateString('es-CO').replace(/\//g, '-')}.csv`;
+            link.click();
+            URL.revokeObjectURL(url);
+            showToast('Exportación exitosa', 'green');
+        }
         async function guardarUsuario() {
             const nombre = document.getElementById('u-nombre').value.trim();
             const apellido = document.getElementById('u-apellido').value.trim();
