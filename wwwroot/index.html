@@ -1383,6 +1383,13 @@
                     </div>
                 </div>
             </div>
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-top:12px;">
+                <div id="usuarios-contador" style="font-size:11px;color:var(--text3);letter-spacing:.5px">
+                    Mostrando 0 usuarios
+                </div>
+                <div id="usuarios-paginacion" style="display:flex;gap:4px;align-items:center;">
+                </div>
+            </div>  
             <!-- ═══ GUÍA ═══ -->
             <div class="view" id="view-guia">
                 <div class="doc-section">
@@ -2451,35 +2458,87 @@
             }
         }
         // ═══ CARGAR USUARIOS DESDE API ═══
+        let paginaUsuarios = 1;
+        const usuariosPorPagina = 10;
+        let todosLosUsuarios = [];
+
         async function cargarUsuarios() {
             const tbody = document.getElementById('tbody-usuarios');
             tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;color:var(--text3);padding:30px">Cargando usuarios...</td></tr>`;
             try {
                 const res = await fetch(`${API}/Usuarios`);
-                const usuarios = await res.json();
-                if (usuarios.length === 0) {
-                    tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;color:var(--text3);padding:30px">No hay usuarios registrados.</td></tr>`;
-                    return;
-                }
-                tbody.innerHTML = usuarios.map(u => {
-                    const estadoColor = u.estado === 'activo' ? 'var(--green)' : 'var(--text3)';
-                    return `<tr>
-                                      <td class="mono">${u.idUsuario}</td>
-                                      <td class="bold">${u.nombre}</td>
-                                      <td>${u.apellido}</td>
-                                      <td class="mono">${u.email}</td>
-                                      <td><span class="badge ok">${u.rol?.nombreRol || '—'}</span></td>
-                                      <td><span style="color:${estadoColor};font-size:12px;font-weight:600">${u.estado || '—'}</span></td>
-                                      <td><div style="display:flex;gap:5px">
-                                        <button class="btn btn-ghost btn-sm" onclick="abrirEditarUsuario(${u.idUsuario})" title="Editar">✏</button>
-                                        <button class="btn btn-ghost btn-sm" onclick="abrirCambioContrasena(${u.idUsuario}, '${u.nombre}')" title="Cambiar contraseña">🔑</button>
-                                        <button class="btn btn-danger btn-sm" onclick="eliminarUsuario(${u.idUsuario})" title="Eliminar">✕</button>
-                                      </div></td>
-                                    </tr>`;
-                }).join('');
+                todosLosUsuarios = await res.json();
+                paginaUsuarios = 1;
+                renderUsuarios(todosLosUsuarios);
             } catch (err) {
                 tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;color:var(--accent);padding:30px">⚠ Error conectando con la API</td></tr>`;
             }
+        }
+
+        function renderUsuarios(usuarios) {
+            const tbody = document.getElementById('tbody-usuarios');
+            const total = usuarios.length;
+            const totalPaginas = Math.ceil(total / usuariosPorPagina);
+
+            if (paginaUsuarios > totalPaginas) paginaUsuarios = 1;
+
+            const inicio = (paginaUsuarios - 1) * usuariosPorPagina;
+            const fin = inicio + usuariosPorPagina;
+            const paginados = usuarios.slice(inicio, fin);
+
+            if (paginados.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;color:var(--text3);padding:30px">No hay usuarios registrados.</td></tr>`;
+            } else {
+                tbody.innerHTML = paginados.map(u => {
+                    const estadoColor = u.estado === 'activo' ? 'var(--green)' : 'var(--text3)';
+                    return `<tr>
+          <td class="mono">${u.idUsuario}</td>
+          <td class="bold">${u.nombre}</td>
+          <td>${u.apellido}</td>
+          <td class="mono">${u.email}</td>
+          <td><span class="badge ok">${u.rol?.nombreRol || '—'}</span></td>
+          <td><span style="color:${estadoColor};font-size:12px;font-weight:600">${u.estado || '—'}</span></td>
+          <td><div style="display:flex;gap:5px">
+            <button class="btn btn-ghost btn-sm" onclick="abrirEditarUsuario(${u.idUsuario})" title="Editar">✏</button>
+            <button class="btn btn-ghost btn-sm" onclick="abrirCambioContrasena(${u.idUsuario}, '${u.nombre}')" title="Cambiar contraseña">🔑</button>
+            <button class="btn btn-danger btn-sm" onclick="eliminarUsuario(${u.idUsuario})" title="Eliminar">✕</button>
+          </div></td>
+        </tr>`;
+                }).join('');
+            }
+
+            // Contador
+            const contador = document.getElementById('usuarios-contador');
+            if (contador) contador.textContent = total === 0
+                ? 'Sin usuarios'
+                : `Mostrando ${inicio + 1}–${Math.min(fin, total)} de ${total} usuarios`;
+
+            // Paginación
+            const pag = document.getElementById('usuarios-paginacion');
+            if (!pag) return;
+            if (totalPaginas <= 1) { pag.innerHTML = ''; return; }
+
+            let btns = '';
+            btns += `<button class="btn btn-ghost btn-sm" ${paginaUsuarios === 1 ? 'disabled' : ''}
+      onclick="cambiarPaginaUsuarios(${paginaUsuarios - 1})">‹</button>`;
+            for (let i = 1; i <= totalPaginas; i++) {
+                if (i === 1 || i === totalPaginas || (i >= paginaUsuarios - 1 && i <= paginaUsuarios + 1)) {
+                    btns += `<button class="btn btn-sm" style="${i === paginaUsuarios ?
+                        'background:var(--accent);color:#fff;' :
+                        'background:var(--bg3);color:var(--text2);border:1px solid var(--border);'}"
+          onclick="cambiarPaginaUsuarios(${i})">${i}</button>`;
+                } else if (i === paginaUsuarios - 2 || i === paginaUsuarios + 2) {
+                    btns += `<span style="color:var(--text3);padding:0 4px">...</span>`;
+                }
+            }
+            btns += `<button class="btn btn-ghost btn-sm" ${paginaUsuarios === totalPaginas ? 'disabled' : ''}
+      onclick="cambiarPaginaUsuarios(${paginaUsuarios + 1})">›</button>`;
+            pag.innerHTML = btns;
+        }
+
+        function cambiarPaginaUsuarios(pagina) {
+            paginaUsuarios = pagina;
+            renderUsuarios(todosLosUsuarios);
         }
 
         async function guardarUsuario() {
@@ -3003,15 +3062,15 @@
         }
 
         function buscarUsuarios(texto) {
-            if (!texto.trim()) { cargarUsuarios(); return; }
+            if (!texto.trim()) { renderUsuarios(todosLosUsuarios); return; }
             const txtLower = texto.toLowerCase();
-            const tbody = document.querySelector('#view-usuarios table tbody');
-            const filas = Array.from(tbody.querySelectorAll('tr'));
-            filas.forEach(fila => {
-                const nombre = fila.querySelector('td:nth-child(2)')?.textContent.toLowerCase() || '';
-                const email = fila.querySelector('td:nth-child(4)')?.textContent.toLowerCase() || '';
-                fila.style.display = (nombre.includes(txtLower) || email.includes(txtLower)) ? '' : 'none';
-            });
+            const filtrados = todosLosUsuarios.filter(u =>
+                u.nombre.toLowerCase().includes(txtLower) ||
+                u.apellido.toLowerCase().includes(txtLower) ||
+                u.email.toLowerCase().includes(txtLower)
+            );
+            paginaUsuarios = 1;
+            renderUsuarios(filtrados);
         }
 
         // ═══ FILTRAR PRODUCTOS ═══
