@@ -1352,7 +1352,8 @@
                 </div>
                 <div id="usuarios-paginacion" style="display:flex;gap:4px;align-items:center;">
                 </div>
-            </div>  
+            </div>
+
             <!-- ═══ GUÍA ═══ -->
             <div class="view" id="view-guia">
                 <div class="doc-section">
@@ -1361,11 +1362,24 @@
                         Vistas del Sistema
                     </h3>
                     <ul class="doc-list">
-                        <li><strong>Dashboard:</strong> Centro de control con KPIs, gráfico de movimientos por categoría, últimos movimientos y panel de alertas rápidas.</li>
-                        <li><strong>Productos:</strong> Listado con filtros por categoría y estado. CRUD completo con barra visual de stock por fila.</li>
-                        <li><strong>Movimientos:</strong> Historial filtrable de entradas/salidas. Modal de registro con selección de tipo, cantidad, motivo y documento.</li>
+                        <li><strong>Dashboard:</strong> Centro de control con KPIs en tiempo real, gráfico de movimientos por categoría, actividad reciente y panel de alertas de stock.</li>
+                        <li><strong>Productos:</strong> Listado con filtros dinámicos por categoría y estado. CRUD completo, paginación de 10 por página, barra visual de stock y exportación a Excel.</li>
+                        <li><strong>Movimientos:</strong> Historial filtrable por tipo y fecha. Registro de entradas/salidas con actualización automática de stock. Paginación y exportación a Excel.</li>
                         <li><strong>Alertas:</strong> Vista priorizada en dos columnas: Críticos (rojo) y Advertencias (amarillo), con acción directa de reposición.</li>
-                        <li><strong>Categorías:</strong> CRUD simple para gestionar las categorías del inventario.</li>
+                        <li><strong>Categorías:</strong> CRUD completo con contador real de productos por categoría. Solo visible para Administrador.</li>
+                        <li><strong>Usuarios:</strong> CRUD completo con cambio de contraseña, paginación y buscador. Solo visible para Administrador.</li>
+                    </ul>
+                </div>
+
+                <div class="doc-section">
+                    <h3>
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2" /><circle cx="9" cy="7" r="4" /></svg>
+                        Roles y Permisos
+                    </h3>
+                    <ul class="doc-list">
+                        <li><strong style="color:var(--accent)">Administrador:</strong> Acceso total — CRUD en todas las secciones, gestión de usuarios y categorías, exportación.</li>
+                        <li><strong style="color:var(--yellow)">Operador:</strong> Puede ver y crear productos, registrar movimientos y ver alertas. No accede a Usuarios ni Categorías.</li>
+                        <li><strong style="color:var(--blue)">Consulta:</strong> Solo lectura — sin botones de acción, sin acceso a Usuarios ni Categorías.</li>
                     </ul>
                 </div>
 
@@ -1375,11 +1389,25 @@
                         Flujo de Navegación
                     </h3>
                     <ul class="doc-list">
-                        <li>Login → Dashboard (pantalla principal de bienvenida).</li>
+                        <li>Login → Dashboard (pantalla principal con datos en tiempo real).</li>
                         <li>Sidebar siempre visible; el item activo se resalta en rojo CasaAuto.</li>
-                        <li>Desde Productos, botón "↔" abre el modal de movimiento para ese producto específico.</li>
+                        <li>Desde Productos, botón "↔" abre el modal de movimiento con el producto preseleccionado.</li>
                         <li>Desde Alertas, "Registrar Entrada" abre el modal preconfigurado reduciendo clics.</li>
-                        <li>El buscador global en el topbar filtra productos sin cambiar de vista.</li>
+                        <li>Buscador global en el topbar: escribe para filtrar datos o navegar entre secciones. Usa ↑↓ y Enter para navegar con teclado.</li>
+                        <li>Botón Excel en Productos y Movimientos descarga un archivo .csv compatible con Excel.</li>
+                    </ul>
+                </div>
+
+                <div class="doc-section">
+                    <h3>
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9M13.73 21a2 2 0 01-3.46 0" /></svg>
+                        Lógica de Alertas de Stock
+                    </h3>
+                    <ul class="doc-list">
+                        <li><strong style="color:var(--accent)">Crítico (rojo):</strong> stock_actual = 0. Punto pulsante rojo, badge "Sin Stock".</li>
+                        <li><strong style="color:var(--yellow)">Advertencia (amarillo):</strong> stock_actual menor que stock_minimo. Punto pulsante amarillo, badge "Stock Bajo".</li>
+                        <li><strong style="color:var(--green)">OK (verde):</strong> stock_actual mayor o igual a stock_minimo. Sin alerta, barra verde.</li>
+                        <li>El badge rojo en el menú "Alertas de Stock" muestra el total de productos críticos + advertencias en tiempo real.</li>
                     </ul>
                 </div>
 
@@ -1397,19 +1425,6 @@
                         <div class="color-chip"><div class="color-swatch" style="background:#f59e0b"></div><div><div class="color-label">Stock Bajo</div><div class="color-hex">#f59e0b</div></div></div>
                         <div class="color-chip"><div class="color-swatch" style="background:#f0f0f0"></div><div><div class="color-label">Texto Principal</div><div class="color-hex">#f0f0f0</div></div></div>
                     </div>
-                </div>
-
-                <div class="doc-section">
-                    <h3>
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9" /></svg>
-                        Lógica de Alertas de Stock
-                    </h3>
-                    <ul class="doc-list">
-                        <li><strong style="color:var(--accent)">Crítico (rojo):</strong> stock_actual = 0 ó stock_actual &lt; stock_minimo × 40%. Punto pulsante rojo, badge "Sin Stock / Crítico".</li>
-                        <li><strong style="color:var(--yellow)">Advertencia (amarillo):</strong> stock_actual &lt; stock_minimo. Punto pulsante amarillo, badge "Stock Bajo".</li>
-                        <li><strong style="color:var(--green)">OK (verde):</strong> stock_actual ≥ stock_minimo. Sin alerta, barra verde.</li>
-                        <li>El contador rojo en el menú "Alertas de Stock" refleja el total de productos en estado Crítico + Advertencia.</li>
-                    </ul>
                 </div>
             </div>
 
