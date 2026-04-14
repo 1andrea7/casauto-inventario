@@ -2023,19 +2023,22 @@
                     return;
                 }
 
-                tbody.innerHTML = categorias.map((c, i) => `
+                tbody.innerHTML = categorias.map((c, i) => {
+                    const count = todosLosProductos.filter(p => p.idCategoria === c.idCategoria).length;
+                    return `
                 <tr>
                   <td class="mono">${String(i + 1).padStart(2, '0')}</td>
                   <td class="bold">${c.nombreCategoria}</td>
                   <td>${c.descripcion || '—'}</td>
-                  <td class="mono">—</td>
+                  <td class="mono">${count}</td>
                   <td>
                     <div style="display:flex;gap:5px">
                       <button class="btn btn-ghost btn-sm" onclick="abrirEditarCategoria(${c.idCategoria})">✏ Editar</button>
                       <button class="btn btn-danger btn-sm" onclick="eliminarCategoria(${c.idCategoria})">✕</button>
                     </div>
-                  </td>
-                </tr>`).join('');
+                 </td>
+                </tr>`;
+                }).join('');
 
             } catch (err) {
                 console.error('Error cargando categorías:', err);
@@ -2280,17 +2283,21 @@
             return `Hace ${Math.floor(diff / 1440)} días`;
         }
         // ═══ MOVIMIENTOS ═══
-        async function cargarProductosEnSelect() {
+        async function cargarProductos() {
+            const tbody = document.getElementById('tbody-productos');
+            tbody.innerHTML = `<tr><td colspan="9" style="text-align:center;color:var(--text3);padding:30px">Cargando productos...</td></tr>`;
             try {
-                const res = await fetch(`${API}/Productos`);
-                const productos = await res.json();
-                const select = document.getElementById('mov-producto');
-                select.innerHTML = '<option value="">Seleccionar producto...</option>';
-                productos.forEach(p => {
-                    select.innerHTML += `<option value="${p.idProducto}">${p.nombre} (${p.codigoProducto})</option>`;
-                });
+                const [resP, resC] = await Promise.all([
+                    fetch(`${API}/Productos`),
+                    fetch(`${API}/Categorias`)
+                ]);
+                todosLosProductos = await resP.json();
+                const categorias = await resC.json();
+                window.mapaCategorias = {};
+                categorias.forEach(c => window.mapaCategorias[c.idCategoria] = c.nombreCategoria);
+                renderProductos(todosLosProductos);
             } catch (err) {
-                showToast('Error cargando productos', 'red');
+                tbody.innerHTML = `<tr><td colspan="9" style="text-align:center;color:var(--accent);padding:30px">⚠ Error conectando con la API</td></tr>`;
             }
         }
 
@@ -2942,17 +2949,7 @@
         }
 
         // ═══ CARGAR PRODUCTOS DESDE API ═══
-        async function cargarProductos() {
-            const tbody = document.getElementById('tbody-productos');
-            tbody.innerHTML = `<tr><td colspan="9" style="text-align:center;color:var(--text3);padding:30px">Cargando productos...</td></tr>`;
-            try {
-                const res = await fetch(`${API}/Productos`);
-                todosLosProductos = await res.json();
-                renderProductos(todosLosProductos);
-            } catch (err) {
-                tbody.innerHTML = `<tr><td colspan="9" style="text-align:center;color:var(--accent);padding:30px">⚠ Error conectando con la API</td></tr>`;
-            }
-        }
+       
 
         function renderProductos(productos) {
             const tbody = document.getElementById('tbody-productos');
@@ -2969,7 +2966,7 @@
                 return `<tr>
                 <td class="mono">${p.codigoProducto}</td>
                 <td class="bold">${p.nombre}</td>
-                <td>${p.idCategoria}</td>
+                <td>${window.mapaCategorias?.[p.idCategoria] || p.idCategoria}</td>
                 <td class="mono">${p.ubicacionBodega || '—'}</td>
                 <td><div class="stock-bar"><div class="stock-fill ${stockClass}" style="width:${stockPct}%"></div></div>
                     <span class="mono" style="${stockColor}">${p.stockActual}</span></td>
