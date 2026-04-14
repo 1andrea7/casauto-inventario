@@ -1931,9 +1931,37 @@
             if (name === 'dashboard') cargarDashboard();
         }
 
+        async function cargarCategoriasEnSelect() {
+            try {
+                const res = await fetch(`${API}/Categorias`);
+                const categorias = await res.json();
+                const opciones = categorias.map(c =>
+                    `<option value="${c.idCategoria}">${c.nombreCategoria}</option>`
+                ).join('');
+
+                // Modal Nuevo Producto
+                const selectNuevo = document.getElementById('p-categoria');
+                if (selectNuevo) {
+                    selectNuevo.innerHTML = '<option value="">Seleccionar...</option>' + opciones;
+                }
+
+                // Modal Editar Producto
+                const selectEditar = document.getElementById('ep-categoria');
+                if (selectEditar) {
+                    const valorActual = selectEditar.value;
+                    selectEditar.innerHTML = opciones;
+                    selectEditar.value = valorActual;
+                }
+
+            } catch (err) {
+                showToast('Error cargando categorías', 'red');
+            }
+        }
+
         function openModal(id, cargarProductos = true) {
             document.getElementById(id).classList.add('open');
             if (id === 'modal-movimiento' && cargarProductos) cargarProductosEnSelect();
+            if (id === 'modal-producto' || id === 'modal-editar-producto') cargarCategoriasEnSelect();
         }
 
         async function abrirMovimiento(idProducto) {
