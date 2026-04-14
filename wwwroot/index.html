@@ -1223,7 +1223,7 @@
                         <input type="date" id="filtro-fecha-fin" class="filter-select"
                                style="padding:7px 12px;font-family:'Barlow',sans-serif;"
                                onchange="filtrarMovimientosPorFecha()">
-                        
+
                         <button class="btn btn-ghost btn-sm">Exportar</button>
                         <button class="btn btn-primary" onclick="openModal('modal-movimiento')">
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="width:13px;height:13px"><path d="M12 5v14M5 12h14" /></svg>
@@ -1291,6 +1291,13 @@
                             </tbody>
                         </table>
                     </div>
+                </div>
+            </div>
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-top:12px;">
+                <div id="movimientos-contador" style="font-size:11px;color:var(--text3);letter-spacing:.5px">
+                    Mostrando 0 movimientos
+                </div>
+                <div id="movimientos-paginacion" style="display:flex;gap:4px;align-items:center;">
                 </div>
             </div>
 
@@ -2764,32 +2771,79 @@
             }
         }
 
+        let paginaMovimientos = 1;
+        const movimientosPorPagina = 10;
+        let movimientosFiltradosActuales = [];
+
         function renderMovimientos(movimientos) {
+            movimientosFiltradosActuales = movimientos;
             const tbody = document.querySelector('#view-movimientos table tbody');
-            if (movimientos.length === 0) {
+            const total = movimientos.length;
+            const totalPaginas = Math.ceil(total / movimientosPorPagina);
+
+            if (paginaMovimientos > totalPaginas) paginaMovimientos = 1;
+
+            const inicio = (paginaMovimientos - 1) * movimientosPorPagina;
+            const fin = inicio + movimientosPorPagina;
+            const paginados = movimientos.slice(inicio, fin);
+
+            if (paginados.length === 0) {
                 tbody.innerHTML = `<tr><td colspan="8" style="text-align:center;color:var(--text3);padding:30px">No hay movimientos registrados.</td></tr>`;
-                return;
+            } else {
+                tbody.innerHTML = paginados.map(m => {
+                    const fecha = new Date(m.fechaMovimiento).toLocaleDateString('es-CO', {
+                        day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit'
+                    });
+                    const eEntrada = m.tipoMovimiento === 'entrada';
+                    const badgeClass = eEntrada ? 'in' : 'out';
+                    const badgeText = eEntrada ? '▲ Entrada' : '▼ Salida';
+                    const cantColor = eEntrada ? 'color:var(--green)' : 'color:var(--accent)';
+                    const cantPrefix = eEntrada ? '+' : '-';
+                    return `<tr>
+          <td class="mono">${fecha}</td>
+          <td><span class="badge ${badgeClass}">${badgeText}</span></td>
+          <td class="bold">${m.producto?.nombre || '—'}</td>
+          <td class="mono" style="${cantColor}">${cantPrefix}${m.cantidad}</td>
+          <td class="mono">${m.stockAntes} → ${m.stockDespues}</td>
+          <td>${m.motivo || '—'}</td>
+          <td class="mono">${m.referenciaDocumento || '—'}</td>
+          <td>${mapaUsuariosGlobal[m.idUsuario] || m.idUsuario}</td>
+        </tr>`;
+                }).join('');
             }
-            tbody.innerHTML = movimientos.map(m => {
-                const fecha = new Date(m.fechaMovimiento).toLocaleDateString('es-CO', {
-                    day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit'
-                });
-                const eEntrada = m.tipoMovimiento === 'entrada';
-                const badgeClass = eEntrada ? 'in' : 'out';
-                const badgeText = eEntrada ? '▲ Entrada' : '▼ Salida';
-                const cantColor = eEntrada ? 'color:var(--green)' : 'color:var(--accent)';
-                const cantPrefix = eEntrada ? '+' : '-';
-                return `<tr>
-                            <td class="mono">${fecha}</td>
-                            <td><span class="badge ${badgeClass}">${badgeText}</span></td>
-                            <td class="bold">${m.producto?.nombre || '—'}</td>
-                            <td class="mono" style="${cantColor}">${cantPrefix}${m.cantidad}</td>
-                            <td class="mono">${m.stockAntes} → ${m.stockDespues}</td>
-                            <td>${m.motivo || '—'}</td>
-                            <td class="mono">${m.referenciaDocumento || '—'}</td>
-                            <td>${mapaUsuariosGlobal[m.idUsuario] || m.idUsuario}</td>
-                          </tr>`;
-            }).join('');
+
+            // Contador
+            const contador = document.getElementById('movimientos-contador');
+            if (contador) contador.textContent = total === 0
+                ? 'Sin movimientos'
+                : `Mostrando ${inicio + 1}–${Math.min(fin, total)} de ${total} movimientos`;
+
+            // Paginación
+            const pag = document.getElementById('movimientos-paginacion');
+            if (!pag) return;
+            if (totalPaginas <= 1) { pag.innerHTML = ''; return; }
+
+            let btns = '';
+            btns += `<button class="btn btn-ghost btn-sm" ${paginaMovimientos === 1 ? 'disabled' : ''}
+      onclick="cambiarPaginaMovimientos(${paginaMovimientos - 1})">‹</button>`;
+            for (let i = 1; i <= totalPaginas; i++) {
+                if (i === 1 || i === totalPaginas || (i >= paginaMovimientos - 1 && i <= paginaMovimientos + 1)) {
+                    btns += `<button class="btn btn-sm" style="${i === paginaMovimientos ?
+                        'background:var(--accent);color:#fff;' :
+                        'background:var(--bg3);color:var(--text2);border:1px solid var(--border);'}"
+          onclick="cambiarPaginaMovimientos(${i})">${i}</button>`;
+                } else if (i === paginaMovimientos - 2 || i === paginaMovimientos + 2) {
+                    btns += `<span style="color:var(--text3);padding:0 4px">...</span>`;
+                }
+            }
+            btns += `<button class="btn btn-ghost btn-sm" ${paginaMovimientos === totalPaginas ? 'disabled' : ''}
+      onclick="cambiarPaginaMovimientos(${paginaMovimientos + 1})">›</button>`;
+            pag.innerHTML = btns;
+        }
+
+        function cambiarPaginaMovimientos(pagina) {
+            paginaMovimientos = pagina;
+            renderMovimientos(movimientosFiltradosActuales);
         }
         function filtrarMovimientosPorFecha() {
             const inicio = document.getElementById('filtro-fecha-inicio').value;
