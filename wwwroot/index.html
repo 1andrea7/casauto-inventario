@@ -1199,7 +1199,13 @@
                         </table>
                     </div>
                 </div>
-                <div style="margin-top:10px;font-size:11px;color:var(--text3);text-align:right;letter-spacing:.5px">Mostrando 5 de 284 productos</div>
+                <div style="display:flex;align-items:center;justify-content:space-between;margin-top:12px;">
+                    <div id="productos-contador" style="font-size:11px;color:var(--text3);letter-spacing:.5px">
+                        Mostrando 0 productos
+                    </div>
+                    <div id="productos-paginacion" style="display:flex;gap:4px;align-items:center;">
+                    </div>
+                </div>
             </div>
 
             <!-- ═══ MOVIMIENTOS ═══ -->
@@ -2916,6 +2922,7 @@
                 p.nombre.toLowerCase().includes(txtLower) ||
                 p.codigoProducto.toLowerCase().includes(txtLower)
             );
+            window._productosFiltrados = filtrados;
             renderProductos(filtrados);
         }
 
@@ -2973,43 +2980,89 @@
                 });
             }
 
+            window._productosFiltrados = filtrados;
             renderProductos(filtrados);
         }
 
         // ═══ CARGAR PRODUCTOS DESDE API ═══
        
 
+        let paginaActual = 1;
+        const productosPorPagina = 10;
+
         function renderProductos(productos) {
             const tbody = document.getElementById('tbody-productos');
-            if (productos.length === 0) {
+            const total = productos.length;
+            const totalPaginas = Math.ceil(total / productosPorPagina);
+
+            if (paginaActual > totalPaginas) paginaActual = 1;
+
+            const inicio = (paginaActual - 1) * productosPorPagina;
+            const fin = inicio + productosPorPagina;
+            const paginados = productos.slice(inicio, fin);
+
+            if (paginados.length === 0) {
                 tbody.innerHTML = `<tr><td colspan="9" style="text-align:center;color:var(--text3);padding:30px">No hay productos que coincidan con los filtros.</td></tr>`;
-                return;
+            } else {
+                tbody.innerHTML = paginados.map(p => {
+                    const stockPct = p.stockMinimo ? Math.min((p.stockActual / p.stockMinimo) * 100, 100) : 100;
+                    const stockClass = p.stockActual === 0 ? 'out' : p.stockActual < p.stockMinimo ? 'low' : 'ok';
+                    const badgeText = p.stockActual === 0 ? '✕ Agotado' : p.stockActual < p.stockMinimo ? '⚠ Bajo' : 'OK';
+                    const stockColor = stockClass === 'out' ? 'color:var(--accent)' : stockClass === 'low' ? 'color:var(--yellow)' : '';
+                    const precioCompra = p.precioCompra ? `$${p.precioCompra.toLocaleString('es-CO')}` : '—';
+                    return `<tr>
+          <td class="mono">${p.codigoProducto}</td>
+          <td class="bold">${p.nombre}</td>
+          <td>${window.mapaCategorias?.[p.idCategoria] || p.idCategoria}</td>
+          <td class="mono">${p.ubicacionBodega || '—'}</td>
+          <td><div class="stock-bar"><div class="stock-fill ${stockClass}" style="width:${stockPct}%"></div></div>
+              <span class="mono" style="${stockColor}">${p.stockActual}</span></td>
+          <td class="mono" style="color:var(--text3)">${precioCompra}</td>
+          <td class="mono">$${p.precioUnitario.toLocaleString('es-CO')}</td>
+          <td><span class="badge ${stockClass}">${badgeText}</span></td>
+          <td><div style="display:flex;gap:5px">
+            ${window.rolActual !== 'Consulta' ? `<button class="btn btn-ghost btn-sm" onclick="abrirEditarProducto(${p.idProducto})" title="Editar">✏</button>` : ''}
+            ${window.rolActual !== 'Consulta' ? `<button class="btn btn-ghost btn-sm" onclick="abrirMovimiento(${p.idProducto})" title="Movimiento">↔</button>` : ''}
+            ${window.rolActual === 'Administrador' ? `<button class="btn btn-danger btn-sm" onclick="eliminarProducto(${p.idProducto})">✕ Eliminar</button>` : ''}
+          </div></td>
+        </tr>`;
+                }).join('');
             }
-            tbody.innerHTML = productos.map(p => {
-                const stockPct = p.stockMinimo ? Math.min((p.stockActual / p.stockMinimo) * 100, 100) : 100;
-                const stockClass = p.stockActual === 0 ? 'out' : p.stockActual < p.stockMinimo ? 'low' : 'ok';
-                const badgeText = p.stockActual === 0 ? '✕ Agotado' : p.stockActual < p.stockMinimo ? '⚠ Bajo' : 'OK';
-                const stockColor = stockClass === 'out' ? 'color:var(--accent)' : stockClass === 'low' ? 'color:var(--yellow)' : '';
-                const precioCompra = p.precioCompra ? `$${p.precioCompra.toLocaleString('es-CO')}` : '—';
-                return `<tr>
-                <td class="mono">${p.codigoProducto}</td>
-                <td class="bold">${p.nombre}</td>
-                <td>${window.mapaCategorias?.[p.idCategoria] || p.idCategoria}</td>
-                <td class="mono">${p.ubicacionBodega || '—'}</td>
-                <td><div class="stock-bar"><div class="stock-fill ${stockClass}" style="width:${stockPct}%"></div></div>
-                    <span class="mono" style="${stockColor}">${p.stockActual}</span></td>
-                <td class="mono" style="color:var(--text3)">${precioCompra}</td>
-                <td class="mono">$${p.precioUnitario.toLocaleString('es-CO')}</td>
-                <td><span class="badge ${stockClass}">${badgeText}</span></td>
-                <td><div style="display:flex;gap:5px">
-                  ${window.rolActual !== 'Consulta' ? `<button class="btn btn-ghost btn-sm" onclick="abrirEditarProducto(${p.idProducto})" title="Editar">✏</button>` : ''}
-                  ${window.rolActual !== 'Consulta' ? `<button class="btn btn-ghost btn-sm" onclick="abrirMovimiento(${p.idProducto})" title="Movimiento">↔</button>` : ''}
-                  ${window.rolActual === 'Administrador' ? `<button class="btn btn-danger btn-sm" onclick="eliminarProducto(${p.idProducto})">✕ Eliminar</button>` : ''}
-                </div></td>
-              </tr>`;
-            }).join('');
+
+            // Contador
+            document.getElementById('productos-contador').textContent =
+                `Mostrando ${inicio + 1}–${Math.min(fin, total)} de ${total} productos`;
+
+            // Paginación
+            const pag = document.getElementById('productos-paginacion');
+            if (totalPaginas <= 1) { pag.innerHTML = ''; return; }
+
+            let btns = '';
+            // Anterior
+            btns += `<button class="btn btn-ghost btn-sm" ${paginaActual === 1 ? 'disabled' : ''} 
+      onclick="cambiarPagina(${paginaActual - 1}, window._productosFiltrados)">‹</button>`;
+            // Páginas
+            for (let i = 1; i <= totalPaginas; i++) {
+                if (i === 1 || i === totalPaginas || (i >= paginaActual - 1 && i <= paginaActual + 1)) {
+                    btns += `<button class="btn btn-sm" style="${i === paginaActual ?
+                        'background:var(--accent);color:#fff;' :
+                        'background:var(--bg3);color:var(--text2);border:1px solid var(--border);'}"
+          onclick="cambiarPagina(${i}, window._productosFiltrados)">${i}</button>`;
+                } else if (i === paginaActual - 2 || i === paginaActual + 2) {
+                    btns += `<span style="color:var(--text3);padding:0 4px">...</span>`;
+                }
+            }
+            // Siguiente
+            btns += `<button class="btn btn-ghost btn-sm" ${paginaActual === totalPaginas ? 'disabled' : ''} 
+      onclick="cambiarPagina(${paginaActual + 1}, window._productosFiltrados)">›</button>`;
+
+            pag.innerHTML = btns;
         }
 
+        function cambiarPagina(pagina, productos) {
+            paginaActual = pagina;
+            renderProductos(productos || todosLosProductos);
+        }
         // ═══ CERRWAQR SESION ═══
         function cerrarSesion() {
             confirmar('¿Estás segura de que deseas cerrar sesión?', () => {
