@@ -715,6 +715,55 @@
     background: var(--border);
     margin: 18px 0;
   }
+    /* ─── SEARCH DROPDOWN ─── */
+    .search-dropdown {
+        position: absolute;
+        top: 100%;
+        left: 0;
+        right: 0;
+        background: var(--bg2);
+        border: 1px solid var(--border);
+        border-top: none;
+        border-radius: 0 0 4px 4px;
+        z-index: 500;
+        display: none;
+    }
+
+        .search-dropdown.open {
+            display: block;
+        }
+
+    .search-dropdown-item {
+        padding: 10px 14px;
+        font-size: 13px;
+        color: var(--text2);
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        transition: background .1s;
+    }
+
+        .search-dropdown-item:hover {
+            background: var(--bg3);
+            color: var(--text);
+        }
+
+        .search-dropdown-item .item-icon {
+            font-size: 11px;
+            color: var(--text3);
+        }
+
+        .search-dropdown-item .item-label {
+            flex: 1;
+        }
+
+        .search-dropdown-item .item-type {
+            font-size: 10px;
+            color: var(--accent);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
     input[type="date"]::-webkit-calendar-picker-indicator {
         filter: invert(1);
         opacity: 0.5;
@@ -903,9 +952,14 @@
     <main class="main">
         <div class="topbar">
             <div class="page-title" id="page-title"><span class="first">D</span>ashboard</div>
-            <div class="search-box">
+            <div class="search-box" style="position:relative;">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8" /><path d="M21 21l-4.35-4.35" /></svg>
-                <input type="text" id="buscador-productos" placeholder="Buscar producto, código..." oninput="buscarProductos(this.value)">
+                <input type="text" id="buscador-productos" placeholder="Buscar o navegar..."
+                       oninput="buscarGlobal(this.value)"
+                       onkeydown="manejarTeclasBuscador(event)"
+                       onfocus="buscarGlobal(this.value)"
+                       onblur="setTimeout(cerrarDropdown, 300)">
+                <div id="search-dropdown" class="search-dropdown"></div>
             </div>
             <button class="btn btn-ghost btn-sm">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px"><path d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" /></svg>
@@ -1870,10 +1924,8 @@
             if (name === 'usuarios') cargarUsuarios();
             if (name === 'movimientos') cargarMovimientos();
             document.getElementById('buscador-productos').value = '';
-            document.getElementById('buscador-productos').placeholder =
-                name === 'movimientos' ? 'Buscar movimiento...' : 'Buscar producto, código...';
-            document.getElementById('buscador-productos').oninput =
-                name === 'movimientos' ? (e) => buscarMovimientos(e.target.value) : (e) => buscarProductos(e.target.value);
+            document.getElementById('buscador-productos').placeholder = 'Buscar o navegar...';
+            document.getElementById('buscador-productos').oninput = (e) => buscarGlobal(e.target.value);
             if (name === 'alertas') cargarAlertas();
             if (name === 'categorias') cargarCategorias();
             if (name === 'dashboard') cargarDashboard();
@@ -2735,12 +2787,105 @@
 
             renderMovimientos(filtrados);
         }
-        // ═══ BUSCADOR DE MOVIMIENTOS ═══
-        function buscarMovimientos(texto) {
-            if (!texto.trim()) {
-                renderMovimientos(todosLosMovimientos);
-                return;
+
+        // ═══ BUSCADOR GLOBAL ═══
+        const navegacion = {
+            'dashboard': 'dashboard',
+            'productos': 'productos',
+            'movimientos': 'movimientos',
+            'alertas': 'alertas',
+            'alertas de stock': 'alertas',
+            'categorias': 'categorias',
+            'categorías': 'categorias',
+            'usuarios': 'usuarios',
+            'guia': 'guia',
+            'guía': 'guia',
+            'guia del sistema': 'guia',
+            'guía del sistema': 'guia'
+        };
+
+        const vistaActual = () => document.querySelector('.nav-item.active')?.dataset.view || 'dashboard';
+
+        function navegarDesdeBuscador(texto) {
+            const txtLower = texto.toLowerCase().trim();
+            if (navegacion[txtLower]) {
+                document.getElementById('buscador-productos').value = '';
+                switchView(navegacion[txtLower]);
             }
+        }
+
+        let dropdownIndex = -1;
+
+        function manejarTeclasBuscador(event) {
+            const items = document.querySelectorAll('.search-dropdown-item');
+            if (event.key === 'ArrowDown') {
+                event.preventDefault();
+                dropdownIndex = Math.min(dropdownIndex + 1, items.length - 1);
+                items.forEach((item, i) => item.style.background = i === dropdownIndex ? 'var(--bg3)' : '');
+            } else if (event.key === 'ArrowUp') {
+                event.preventDefault();
+                dropdownIndex = Math.max(dropdownIndex - 1, 0);
+                items.forEach((item, i) => item.style.background = i === dropdownIndex ? 'var(--bg3)' : '');
+            } else if (event.key === 'Enter') {
+                if (dropdownIndex >= 0 && items[dropdownIndex]) {
+                    items[dropdownIndex].onmousedown();
+                    dropdownIndex = -1;
+                } else if (items.length > 0) {
+                    items[0].onmousedown();
+                    dropdownIndex = -1;
+                }
+            } else if (event.key === 'Escape') {
+                cerrarDropdown();
+                dropdownIndex = -1;
+            }
+        }
+
+        function cerrarDropdown() {
+            document.getElementById('search-dropdown').classList.remove('open');
+        }
+
+        function buscarGlobal(texto) {
+            const txtLower = texto.toLowerCase().trim();
+            const dropdown = document.getElementById('search-dropdown');
+            const vista = vistaActual();
+
+            // Buscar secciones que coincidan
+            const seccionesCoinciden = Object.entries(navegacion)
+                .filter(([key]) => key.includes(txtLower) && txtLower.length > 0)
+                .map(([key, val]) => ({ key, val }))
+                .filter((v, i, a) => a.findIndex(t => t.val === v.val) === i); // quitar duplicados
+
+            if (seccionesCoinciden.length > 0 && txtLower.length > 0) {
+                dropdown.innerHTML = seccionesCoinciden.map(s => `
+
+                <div class="search-dropdown-item" onmousedown="switchView('${s.val}');cerrarDropdown();document.getElementById('buscador-productos').value='';">
+                <span class="item-label">${titles[s.val]}</span>
+                <span class="item-type">Sección</span>
+            </div>`).join('');
+                dropdown.classList.add('open');
+            } else {
+                dropdown.classList.remove('open');
+            }
+
+            // Filtrar según vista actual en tiempo real
+            if (vista === 'productos') buscarProductos(texto);
+            else if (vista === 'movimientos') buscarMovimientos(texto);
+            else if (vista === 'categorias') buscarCategorias(texto);
+            else if (vista === 'usuarios') buscarUsuarios(texto);
+        }
+
+        function buscarProductos(texto) {
+            if (!texto.trim()) { filtrarProductos(); return; }
+            const txtLower = texto.toLowerCase();
+            const filtrados = todosLosProductos.filter(p =>
+                p.nombre.toLowerCase().includes(txtLower) ||
+                p.codigoProducto.toLowerCase().includes(txtLower)
+            );
+            renderProductos(filtrados);
+        }
+
+        function buscarMovimientos(texto) {
+            if (!texto.trim()) { renderMovimientos(todosLosMovimientos); return; }
             const txtLower = texto.toLowerCase();
             const filtrados = todosLosMovimientos.filter(m =>
                 m.producto?.nombre.toLowerCase().includes(txtLower) ||
@@ -2749,19 +2894,30 @@
             );
             renderMovimientos(filtrados);
         }
-        // ═══ BUSCADOR DE PRODUCTOS ═══
-        function buscarProductos(texto) {
-            if (!texto.trim()) {
-                filtrarProductos();
-                return;
-            }
+
+        function buscarCategorias(texto) {
+            if (!texto.trim()) { cargarCategorias(); return; }
             const txtLower = texto.toLowerCase();
-            const filtrados = todosLosProductos.filter(p =>
-                p.nombre.toLowerCase().includes(txtLower) ||
-                p.codigoProducto.toLowerCase().includes(txtLower)
-            );
-            renderProductos(filtrados);
+            const tbody = document.querySelector('#view-categorias table tbody');
+            const filas = Array.from(tbody.querySelectorAll('tr'));
+            filas.forEach(fila => {
+                const nombre = fila.querySelector('td:nth-child(2)')?.textContent.toLowerCase() || '';
+                fila.style.display = nombre.includes(txtLower) ? '' : 'none';
+            });
         }
+
+        function buscarUsuarios(texto) {
+            if (!texto.trim()) { cargarUsuarios(); return; }
+            const txtLower = texto.toLowerCase();
+            const tbody = document.querySelector('#view-usuarios table tbody');
+            const filas = Array.from(tbody.querySelectorAll('tr'));
+            filas.forEach(fila => {
+                const nombre = fila.querySelector('td:nth-child(2)')?.textContent.toLowerCase() || '';
+                const email = fila.querySelector('td:nth-child(4)')?.textContent.toLowerCase() || '';
+                fila.style.display = (nombre.includes(txtLower) || email.includes(txtLower)) ? '' : 'none';
+            });
+        }
+
         // ═══ FILTRAR PRODUCTOS ═══
         let todosLosProductos = [];
 
