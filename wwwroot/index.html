@@ -2346,6 +2346,12 @@
                 const categorias = await resC.json();
                 window.mapaCategorias = {};
                 categorias.forEach(c => window.mapaCategorias[c.idCategoria] = c.nombreCategoria);
+                // Actualizar filtro de categorías dinámicamente
+                const filtroCat = document.getElementById('filtro-categoria');
+                const valorActual = filtroCat.value;
+                filtroCat.innerHTML = '<option value="">Todas las categorías</option>' +
+                    categorias.map(c => `<option value="${c.idCategoria}">${c.nombreCategoria}</option>`).join('');
+                filtroCat.value = valorActual;  
                 renderProductos(todosLosProductos);
             } catch (err) {
                 tbody.innerHTML = `<tr><td colspan="9" style="text-align:center;color:var(--accent);padding:30px">⚠ Error conectando con la API</td></tr>`;
