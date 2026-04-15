@@ -1876,6 +1876,10 @@
             const btnNuevo = document.querySelector('button[onclick="openModal(\'modal-producto\')"]');
             if (btnNuevo) btnNuevo.style.display = (esAdmin || esOperador) ? '' : 'none';
 
+            // ── Botón Excel siempre visible para todos los roles ──
+            const btnsExcel = document.querySelectorAll('button[onclick="exportarProductosExcel()"], button[onclick="exportarMovimientosExcel()"]');
+            btnsExcel.forEach(btn => btn.style.display = '');
+
             // ── Sección Categorías en sidebar ──
             const navCategorias = document.querySelector('.nav-item[data-view="categorias"]');
             if (navCategorias) navCategorias.style.display = esAdmin ? '' : 'none';
