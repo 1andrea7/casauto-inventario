@@ -13,6 +13,7 @@ namespace CasautoAPI.Data
         public DbSet<Producto> Productos { get; set; }
         public DbSet<MovimientoInventario> MovimientosInventario { get; set; }
         public DbSet<Categoria> Categorias { get; set; }
+        public DbSet<RegistroActividad> RegistrosActividad { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -74,6 +75,21 @@ namespace CasautoAPI.Data
             modelBuilder.Entity<MovimientoInventario>().Property(m => m.FechaMovimiento).HasColumnName("fecha_movimiento");
             modelBuilder.Entity<MovimientoInventario>().HasOne(m => m.Producto).WithMany().HasForeignKey(m => m.IdProducto);
             modelBuilder.Entity<MovimientoInventario>().HasOne(m => m.Usuario).WithMany().HasForeignKey(m => m.IdUsuario);
+
+            // Tabla REGISTRO_ACTIVIDAD
+            modelBuilder.Entity<RegistroActividad>().ToTable("REGISTRO_ACTIVIDAD");
+            modelBuilder.Entity<RegistroActividad>().HasKey(r => r.IdRegistro);
+            modelBuilder.Entity<RegistroActividad>().Property(r => r.IdRegistro).HasColumnName("id_registro");
+            modelBuilder.Entity<RegistroActividad>().Property(r => r.TablaAfectada).HasColumnName("tabla_afectada");
+            modelBuilder.Entity<RegistroActividad>().Property(r => r.IdRegistroAfectado).HasColumnName("id_registro_afectado");
+            modelBuilder.Entity<RegistroActividad>().Property(r => r.Accion).HasColumnName("accion");
+            modelBuilder.Entity<RegistroActividad>().Property(r => r.ValoresAnteriores).HasColumnName("valores_anteriores");
+            modelBuilder.Entity<RegistroActividad>().Property(r => r.ValoresNuevos).HasColumnName("valores_nuevos");
+            modelBuilder.Entity<RegistroActividad>().Property(r => r.IdUsuario).HasColumnName("id_usuario");
+            modelBuilder.Entity<RegistroActividad>().Property(r => r.FechaAccion).HasColumnName("fecha_accion");
+            modelBuilder.Entity<RegistroActividad>().Property(r => r.IpAddress).HasColumnName("ip_address");
+            modelBuilder.Entity<RegistroActividad>().Property(r => r.DescripcionCambio).HasColumnName("descripcion_cambio");
+            modelBuilder.Entity<RegistroActividad>().HasOne(r => r.Usuario).WithMany().HasForeignKey(r => r.IdUsuario);
 
             // Tabla CATEGORIA
             modelBuilder.Entity<Categoria>().ToTable("CATEGORIA");

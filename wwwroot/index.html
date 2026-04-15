@@ -1370,6 +1370,10 @@
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2" /><circle cx="9" cy="7" r="4" /><path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75" /></svg>
                 Usuarios
             </div>
+            <div class="nav-item" data-view="bitacora" id="nav-bitacora">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" /><polyline points="14 2 14 8 20 8" /><line x1="16" y1="13" x2="8" y2="13" /><line x1="16" y1="17" x2="8" y2="17" /><polyline points="10 9 9 9 8 9" /></svg>
+                Bitácora
+            </div>
             <div class="nav-item" data-view="guia">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10" /><path d="M9.09 9a3 3 0 015.83 1c0 2-3 3-3 3M12 17h.01" /></svg>
                 Guía del Sistema
@@ -1810,6 +1814,36 @@
                     Mostrando 0 usuarios
                 </div>
                 <div id="usuarios-paginacion" style="display:flex;gap:4px;align-items:center;">
+                </div>
+            </div>
+
+            <!-- ═══ BITÁCORA ═══ -->
+            <!-- ═══ BITÁCORA ═══ -->
+            <div class="view" id="view-bitacora">
+                <div class="section-header">
+                </div>
+                <div class="card">
+                    <div class="table-wrap">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Fecha</th>
+                                    <th>Acción</th>
+                                    <th>Tabla</th>
+                                    <th>Descripción</th>
+                                    <th>Usuario</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tbody-bitacora">
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div style="display:flex;align-items:center;justify-content:space-between;margin-top:12px;">
+                    <div id="bitacora-contador" style="font-size:11px;color:var(--text3);letter-spacing:.5px">
+                        Mostrando 0 registros
+                    </div>
+                    <div id="bitacora-paginacion" style="display:flex;gap:4px;align-items:center;"></div>
                 </div>
             </div>
 
@@ -2314,6 +2348,7 @@
                 setTimeout(() => loginScreen.style.display = 'none', 300);
 
                 showToast(`Bienvenido, ${usuarioActual.nombre}! — ${usuarioActual.rol}`, 'green');
+                registrarActividad('USUARIO', usuarioActual.idUsuario, 'INSERT', `Inicio de sesión: ${usuarioActual.nombre} ${usuarioActual.apellido}`);
                 cargarProductos();
                 cargarDashboard();
 
@@ -2347,6 +2382,10 @@
             const navUsuarios = document.querySelector('.nav-item[data-view="usuarios"]');
             if (navUsuarios) navUsuarios.style.display = esAdmin ? '' : 'none';
 
+            // ── Sección Bitácora en sidebar ──
+            const navBitacora = document.querySelector('.nav-item[data-view="bitacora"]');
+            if (navBitacora) navBitacora.style.display = esAdmin ? '' : 'none';
+
             // ── Botón "Registrar Movimiento" en vista Movimientos ──
             const btnMovimiento = document.querySelector('button[onclick="openModal(\'modal-movimiento\')"]');
             if (btnMovimiento) btnMovimiento.style.display = (esAdmin || esOperador) ? '' : 'none';
@@ -2366,7 +2405,8 @@
             alertas: 'Alertas de Stock Bajo',
             categorias: 'Categorías',
             usuarios: 'Usuarios',
-            guia: 'Guía del Sistema'
+            guia: 'Guía del Sistema',
+            bitacora: 'Bitácora del Sistema'
         };
 
         document.querySelectorAll('.nav-item[data-view]').forEach(item => {
@@ -2390,6 +2430,7 @@
             if (name === 'alertas') cargarAlertas();
             if (name === 'categorias') cargarCategorias();
             if (name === 'dashboard') cargarDashboard();
+            if (name === 'bitacora') cargarBitacora();
         }
 
         async function cargarCategoriasEnSelect() {
@@ -2502,6 +2543,7 @@
 
                 closeModal('modal-nueva-categoria');
                 showToast('Categoría creada exitosamente', 'green');
+                registrarActividad('CATEGORIA', 0, 'INSERT', `Categoría creada: ${nombre}`);
                 document.getElementById('nc-nombre').value = '';
                 document.getElementById('nc-descripcion').value = '';
                 cargarCategorias();
@@ -2553,6 +2595,7 @@
                         return;
                     }
                     showToast('Categoría eliminada', 'red');
+                    registrarActividad('CATEGORIA', id, 'DELETE', `Categoría eliminada ID: ${id}`);
                     cargarCategorias();
                 } catch (err) {
                     showToast('Error conectando con la API', 'red');
@@ -2598,6 +2641,7 @@
 
                 closeModal('modal-editar-categoria');
                 showToast('Categoría actualizada correctamente', 'green');
+                registrarActividad('CATEGORIA', parseInt(id), 'UPDATE', `Categoría editada: ${nombre}`);
                 cargarCategorias();
             } catch (err) {
                 showToast('Error conectando con la API', 'red');
@@ -2775,6 +2819,108 @@
             }
         }
 
+        // ═══ BITÁCORA / REGISTRO DE ACTIVIDAD ═══
+        async function registrarActividad(tabla, idAfectado, accion, descripcion, valoresNuevos = null) {
+            try {
+                await fetch(`${API}/RegistroActividad`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        tablaAfectada: tabla,
+                        idRegistroAfectado: idAfectado,
+                        accion: accion,
+                        descripcionCambio: descripcion,
+                        valoresNuevos: valoresNuevos ? JSON.stringify(valoresNuevos) : null,
+                        idUsuario: usuarioActual?.idUsuario || 0
+                    })
+                });
+            } catch (err) {
+                console.warn('No se pudo registrar actividad:', err);
+            }
+        }
+
+        let paginaBitacora = 1;
+        const bitacoraPorPagina = 10;
+
+        async function cargarBitacora() {
+            const tbody = document.getElementById('tbody-bitacora');
+            tbody.innerHTML = `<tr><td colspan="5" style="text-align:center;color:var(--text3);padding:30px">Cargando bitácora...</td></tr>`;
+            try {
+                const res = await fetch(`${API}/RegistroActividad`);
+                const registros = await res.json();
+                renderBitacora(registros);
+            } catch (err) {
+                tbody.innerHTML = `<tr><td colspan="5" style="text-align:center;color:var(--accent);padding:30px">⚠ Error conectando con la API</td></tr>`;
+            }
+        }
+
+        function renderBitacora(registros) {
+            const tbody = document.getElementById('tbody-bitacora');
+            const total = registros.length;
+            const totalPaginas = Math.ceil(total / bitacoraPorPagina);
+
+            if (paginaBitacora > totalPaginas) paginaBitacora = 1;
+
+            const inicio = (paginaBitacora - 1) * bitacoraPorPagina;
+            const fin = inicio + bitacoraPorPagina;
+            const paginados = registros.slice(inicio, fin);
+
+            if (paginados.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="5" style="text-align:center;color:var(--text3);padding:30px">No hay registros en la bitácora.</td></tr>`;
+            } else {
+                const colores = {
+                    'INSERT': 'var(--green)',
+                    'DELETE': 'var(--accent)',
+                    'UPDATE': 'var(--yellow)'
+                };
+                tbody.innerHTML = paginados.map(r => {
+                    const fecha = new Date(r.fechaAccion).toLocaleDateString('es-CO', {
+                        day: '2-digit', month: '2-digit', year: 'numeric',
+                        hour: '2-digit', minute: '2-digit'
+                    });
+                    const color = colores[r.accion] || 'var(--text2)';
+                    return `<tr>
+                        <td class="mono">${fecha}</td>
+                        <td><span class="badge" style="background:${color}22;color:${color}">${r.accion}</span></td>
+                        <td class="mono" style="color:var(--text3)">${r.tablaAfectada}</td>
+                        <td>${r.descripcionCambio || '—'}</td>
+                        <td>${r.usuario?.nombre || ''} ${r.usuario?.apellido || ''}</td>
+                    </tr>`;
+                }).join('');
+            }
+
+            const contador = document.getElementById('bitacora-contador');
+            if (contador) contador.textContent = total === 0
+                ? 'Sin registros'
+                : `Mostrando ${inicio + 1}–${Math.min(fin, total)} de ${total} registros`;
+
+            const pag = document.getElementById('bitacora-paginacion');
+            if (!pag) return;
+            if (totalPaginas <= 1) { pag.innerHTML = ''; return; }
+
+            let btns = '';
+            btns += `<button class="btn btn-ghost btn-sm" ${paginaBitacora === 1 ? 'disabled' : ''}
+                onclick="cambiarPaginaBitacora(${paginaBitacora - 1})">‹</button>`;
+            for (let i = 1; i <= totalPaginas; i++) {
+                if (i === 1 || i === totalPaginas || (i >= paginaBitacora - 1 && i <= paginaBitacora + 1)) {
+                    btns += `<button class="btn btn-sm" style="${i === paginaBitacora ?
+                        'background:var(--accent);color:#fff;' :
+                        'background:var(--bg3);color:var(--text2);border:1px solid var(--border);'}"
+                        onclick="cambiarPaginaBitacora(${i})">${i}</button>`;
+                } else if (i === paginaBitacora - 2 || i === paginaBitacora + 2) {
+                    btns += `<span style="color:var(--text3);padding:0 4px">...</span>`;
+                }
+            }
+            btns += `<button class="btn btn-ghost btn-sm" ${paginaBitacora === totalPaginas ? 'disabled' : ''}
+                onclick="cambiarPaginaBitacora(${paginaBitacora + 1})">›</button>`;
+            pag.innerHTML = btns;
+        }
+
+        function cambiarPaginaBitacora(pagina) {
+            paginaBitacora = pagina;
+            cargarBitacora();
+        }
+
         function calcularHace(fecha) {
             const diff = Math.floor((new Date() - new Date(fecha)) / 60000);
             if (diff < 60) return `Hace ${diff} min`;
@@ -2853,7 +2999,8 @@
 
                 closeModal('modal-movimiento');
                 showToast('Movimiento registrado correctamente', 'green');
-
+                const nomProducto = document.getElementById('mov-producto').options[document.getElementById('mov-producto').selectedIndex].text;
+                registrarActividad('MOVIMIENTO_INVENTARIO', idProducto, 'INSERT', `${tipo === 'entrada' ? 'Entrada' : 'Salida'} de ${cantidad} unidades — ${nomProducto} — ${motivo}`);
                 // Limpiar campos
                 document.getElementById('mov-producto').value = '';
                 document.getElementById('mov-cantidad').value = '';
@@ -2909,6 +3056,7 @@
 
                 closeModal('modal-producto');
                 showToast('Producto creado exitosamente', 'green');
+                registrarActividad('PRODUCTO', 0, 'INSERT', `Producto creado: ${nombre}`);
 
                 // Limpiar campos
                 ['p-codigo', 'p-nombre', 'p-descripcion', 'p-precio-compra',
@@ -3044,6 +3192,7 @@
             link.download = `Movimientos_Casauto_${new Date().toLocaleDateString('es-CO').replace(/\//g, '-')}.csv`;
             link.click();
             URL.revokeObjectURL(url);
+            registrarActividad('PRODUCTO', 0, 'INSERT', `Exportación Excel de productos — ${datos.length} registros`);
             showToast('Exportación exitosa', 'green');
         }
 
@@ -3089,6 +3238,7 @@
             });
 
             doc.save(`Productos_Casauto_${new Date().toLocaleDateString('es-CO').replace(/\//g, '-')}.pdf`);
+            registrarActividad('PRODUCTO', 0, 'INSERT', `Exportación PDF de productos — ${datos.length} registros`);
             showToast('PDF generado exitosamente', 'green');
         }
 
@@ -3140,6 +3290,7 @@
             });
 
             doc.save(`Movimientos_Casauto_${new Date().toLocaleDateString('es-CO').replace(/\//g, '-')}.pdf`);
+            registrarActividad('MOVIMIENTO_INVENTARIO', 0, 'INSERT', `Exportación PDF de movimientos — ${datos.length} registros`);
             showToast('PDF generado exitosamente', 'green');
         }
 
@@ -3178,6 +3329,7 @@
             link.download = `Productos_Casauto_${new Date().toLocaleDateString('es-CO').replace(/\//g, '-')}.csv`;
             link.click();
             URL.revokeObjectURL(url);
+            registrarActividad('MOVIMIENTO_INVENTARIO', 0, 'INSERT', `Exportación Excel de movimientos — ${datos.length} registros`);
             showToast('Exportación exitosa', 'green');
         }
         async function guardarUsuario() {
@@ -3211,6 +3363,7 @@
 
                 closeModal('modal-usuario');
                 showToast('Usuario creado exitosamente', 'green');
+                registrarActividad('USUARIO', 0, 'INSERT', `Usuario creado: ${nombre} ${apellido}`);
 
                 // Limpiar campos
                 ['u-nombre', 'u-apellido', 'u-email', 'u-contrasena'].forEach(id => {
@@ -3235,6 +3388,7 @@
                         return;
                     }
                     showToast('Usuario eliminado', 'red');
+                    registrarActividad('USUARIO', id, 'DELETE', `Usuario eliminado ID: ${id}`);
                     cargarUsuarios();
                 } catch (err) {
                     showToast('Error conectando con la API', 'red');
@@ -3306,6 +3460,7 @@
 
                 closeModal('modal-editar-producto');
                 showToast('Producto actualizado correctamente', 'green');
+                registrarActividad('PRODUCTO', parseInt(id), 'UPDATE', `Producto editado: ${nombre}`);
                 cargarProductos();
 
             } catch (err) {
@@ -3379,6 +3534,7 @@
 
                 closeModal('modal-editar-usuario');
                 showToast('Usuario actualizado correctamente', 'green');
+                registrarActividad('USUARIO', parseInt(id), 'UPDATE', `Usuario editado: ${nombre} ${apellido}`);
                 cargarUsuarios();
 
             } catch (err) {
@@ -3439,6 +3595,7 @@
                         return;
                     }
                     showToast('Producto eliminado', 'red');
+                    registrarActividad('PRODUCTO', id, 'DELETE', `Producto eliminado ID: ${id}`);
                     cargarProductos();
                 } catch (err) {
                     showToast('Error conectando con la API', 'red');
