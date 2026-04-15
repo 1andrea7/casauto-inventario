@@ -1967,7 +1967,17 @@
             document.getElementById('mov-producto').value = idProducto;
             openModal('modal-movimiento', false);
         }
-
+        async function cargarProductosEnSelect() {
+            try {
+                const res = await fetch(`${API}/Productos`);
+                const productos = await res.json();
+                const select = document.getElementById('mov-producto');
+                select.innerHTML = '<option value="">Seleccionar producto...</option>' +
+                    productos.map(p => `<option value="${p.idProducto}">${p.nombre} (Stock: ${p.stockActual})</option>`).join('');
+            } catch (err) {
+                showToast('Error cargando productos', 'red');
+            }
+        }
         function closeModal(id) { document.getElementById(id).classList.remove('open'); }
 
         document.querySelectorAll('.form-overlay').forEach(o => {
@@ -2346,6 +2356,15 @@
             if (!idProducto || !cantidad || cantidad <= 0) {
                 showToast('Selecciona un producto y una cantidad válida', 'yellow');
                 return;
+            }
+
+            // Validar stock suficiente para salidas
+            if (tipo === 'salida') {
+                const producto = todosLosProductos.find(p => p.idProducto === idProducto);
+                if (producto && producto.stockActual < cantidad) {
+                    showToast(`Stock insuficiente — disponible: ${producto.stockActual} unidades`, 'red');
+                    return;
+                }
             }
 
             try {
