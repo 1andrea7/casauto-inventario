@@ -2290,6 +2290,16 @@
     <script>
         //const API = 'https://localhost:7212/api';
         const API = 'https://earpiece-facedown-grimy.ngrok-free.dev/api';
+        // Fetch con headers de ngrok para evitar bloqueo
+        async function apiFetch(url, options = {}) {
+            const defaultHeaders = { 'ngrok-skip-browser-warning': 'true' };
+            if (options.headers) {
+                options.headers = { ...defaultHeaders, ...options.headers };
+            } else {
+                options.headers = defaultHeaders;
+            }
+            return fetch(url, options);
+        }
 
 
         // ═══ LOGIN ═══
@@ -2313,7 +2323,7 @@
             errorDiv.style.display = 'none';
 
             try {
-                const res = await fetch(`${API}/Usuarios/login`, {
+                const res = await apiFetch(`${API}/Usuarios/login`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ email, contrasena })
@@ -2434,7 +2444,7 @@
 
         async function cargarCategoriasEnSelect() {
             try {
-                const res = await fetch(`${API}/Categorias`);
+                const res = await apiFetch(`${API}/Categorias`);
                 const categorias = await res.json();
                 const opciones = categorias.map(c =>
                     `<option value="${c.idCategoria}">${c.nombreCategoria}</option>`
@@ -2472,7 +2482,7 @@
         }
         async function cargarProductosEnSelect() {
             try {
-                const res = await fetch(`${API}/Productos`);
+                const res = await apiFetch(`${API}/Productos`);
                 const productos = await res.json();
                 const select = document.getElementById('mov-producto');
                 select.innerHTML = '<option value="">Seleccionar producto...</option>' +
@@ -2529,7 +2539,7 @@
             }
 
             try {
-                const res = await fetch(`${API}/Categorias`, {
+                const res = await apiFetch(`${API}/Categorias`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ nombreCategoria: nombre, descripcion })
@@ -2554,7 +2564,7 @@
         // ═══ CATEGORÍAS ═══
         async function cargarCategorias() {
             try {
-                const res = await fetch(`${API}/Categorias`);
+                const res = await apiFetch(`${API}/Categorias`);
                 const categorias = await res.json();
                 const tbody = document.querySelector('#view-categorias table tbody');
 
@@ -2588,7 +2598,7 @@
         async function eliminarCategoria(id) {
             confirmar('¿Estás segura de eliminar esta categoría?', async () => {
                 try {
-                    const res = await fetch(`${API}/Categorias/${id}`, { method: 'DELETE' });
+                    const res = await apiFetch(`${API}/Categorias/${id}`, { method: 'DELETE' });
                     if (!res.ok) {
                         showToast('Error al eliminar la categoría', 'red');
                         return;
@@ -2604,7 +2614,7 @@
 
         async function abrirEditarCategoria(id) {
             try {
-                const res = await fetch(`${API}/Categorias`);
+                const res = await apiFetch(`${API}/Categorias`);
                 const categorias = await res.json();
                 const c = categorias.find(x => x.idCategoria === id);
                 document.getElementById('ec-id').value = c.idCategoria;
@@ -2627,7 +2637,7 @@
             }
 
             try {
-                const res = await fetch(`${API}/Categorias/${id}`, {
+                const res = await apiFetch(`${API}/Categorias/${id}`, {
                     method: 'PUT',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ idCategoria: parseInt(id), nombreCategoria: nombre, descripcion })
@@ -2649,7 +2659,7 @@
         // ═══ ALERTAS DE STOCK ═══
         async function cargarAlertas() {
             try {
-                const res = await fetch(`${API}/Dashboard/alertas`);
+                const res = await apiFetch(`${API}/Dashboard/alertas`);
                 const d = await res.json();
 
                 // Críticos
@@ -2719,7 +2729,7 @@
         // ═══ DASHBOARD ═══
         async function cargarDashboard() {
             try {
-                const res = await fetch(`${API}/Dashboard`);
+                const res = await apiFetch(`${API}/Dashboard`);
                 const d = await res.json();
 
                 // KPIs
@@ -2732,7 +2742,7 @@
                     : `$${d.valorInventario.toLocaleString('es-CO')}`;
                 document.querySelector('.kpi.k4 .kpi-value').textContent = valorM;
                 // Donut chart estado inventario
-                const resDonut = await fetch(`${API}/Dashboard/estado-inventario`);
+                const resDonut = await apiFetch(`${API}/Dashboard/estado-inventario`);
                 const donut = await resDonut.json();
 
                 // Actualizar números del donut
@@ -2760,7 +2770,7 @@
                     circles[3].setAttribute('stroke-dashoffset', `${-(pctOk + pctBajo)}`);
                 }
                 // Gráfico de movimientos por categoría
-                const resGraf = await fetch(`${API}/Dashboard/movimientos-categoria`);
+                const resGraf = await apiFetch(`${API}/Dashboard/movimientos-categoria`);
                 const grafData = await resGraf.json();
                 const maxVal = Math.max(...grafData.map(g => g.total), 1);
                 const miniChart = document.querySelector('.mini-chart');
@@ -2821,7 +2831,7 @@
         // ═══ BITÁCORA / REGISTRO DE ACTIVIDAD ═══
         async function registrarActividad(tabla, idAfectado, accion, descripcion, valoresNuevos = null) {
             try {
-                await fetch(`${API}/RegistroActividad`, {
+                await apiFetch(`${API}/RegistroActividad`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
@@ -2845,7 +2855,7 @@
             const tbody = document.getElementById('tbody-bitacora');
             tbody.innerHTML = `<tr><td colspan="5" style="text-align:center;color:var(--text3);padding:30px">Cargando bitácora...</td></tr>`;
             try {
-                const res = await fetch(`${API}/RegistroActividad`);
+                const res = await apiFetch(`${API}/RegistroActividad`);
                 const registros = await res.json();
                 renderBitacora(registros);
             } catch (err) {
@@ -2976,7 +2986,7 @@
             }
 
             try {
-                const res = await fetch(`${API}/Movimientos`, {
+                const res = await apiFetch(`${API}/Movimientos`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
@@ -3029,7 +3039,7 @@
             }
 
             try {
-                const res = await fetch(`${API}/Productos`, {
+                const res = await apiFetch(`${API}/Productos`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
@@ -3079,7 +3089,7 @@
             const tbody = document.getElementById('tbody-usuarios');
             tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;color:var(--text3);padding:30px">Cargando usuarios...</td></tr>`;
             try {
-                const res = await fetch(`${API}/Usuarios`);
+                const res = await apiFetch(`${API}/Usuarios`);
                 todosLosUsuarios = await res.json();
                 paginaUsuarios = 1;
                 renderUsuarios(todosLosUsuarios);
@@ -3344,7 +3354,7 @@
             }
 
             try {
-                const res = await fetch(`${API}/Usuarios`, {
+                const res = await apiFetch(`${API}/Usuarios`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
@@ -3381,7 +3391,7 @@
         async function eliminarUsuario(id) {
             confirmar('¿Estás segura de eliminar este usuario? Esta acción no se puede deshacer.', async () => {
                 try {
-                    const res = await fetch(`${API}/Usuarios/${id}`, { method: 'DELETE' });
+                    const res = await apiFetch(`${API}/Usuarios/${id}`, { method: 'DELETE' });
                     if (!res.ok) {
                         showToast('Error al eliminar el usuario', 'red');
                         return;
@@ -3397,7 +3407,7 @@
         // ═══ EDITAR PRODUCTO ═══
         async function abrirEditarProducto(id) {
             try {
-                const res = await fetch(`${API}/Productos/${id}`);
+                const res = await apiFetch(`${API}/Productos/${id}`);
                 const p = await res.json();
 
                 document.getElementById('ep-id').value = p.idProducto;
@@ -3433,10 +3443,10 @@
             }
 
             try {
-                const resGet = await fetch(`${API}/Productos/${id}`);
+                const resGet = await apiFetch(`${API}/Productos/${id}`);
                 const productoActual = await resGet.json();
 
-                const res = await fetch(`${API}/Productos/${id}`, {
+                const res = await apiFetch(`${API}/Productos/${id}`, {
                     method: 'PUT',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
@@ -3479,7 +3489,7 @@
         // ═══ EDITAR USUARIO ═══
         async function abrirEditarUsuario(id) {
             try {
-                const res = await fetch(`${API}/Usuarios/${id}`);
+                const res = await apiFetch(`${API}/Usuarios/${id}`);
                 const u = await res.json();
 
                 document.getElementById('eu-id').value = u.idUsuario;
@@ -3509,10 +3519,10 @@
             }
 
             try {
-                const resGet = await fetch(`${API}/Usuarios/${id}`);
+                const resGet = await apiFetch(`${API}/Usuarios/${id}`);
                 const usuarioActualData = await resGet.json();
 
-                const res = await fetch(`${API}/Usuarios/${id}`, {
+                const res = await apiFetch(`${API}/Usuarios/${id}`, {
                     method: 'PUT',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
@@ -3558,11 +3568,11 @@
             }
             try {
                 // Primero obtenemos el usuario actual
-                const resGet = await fetch(`${API}/Usuarios/${usuarioACambiar}`);
+                const resGet = await apiFetch(`${API}/Usuarios/${usuarioACambiar}`);
                 const usuario = await resGet.json();
 
                 // Actualizamos solo la contraseña
-                const res = await fetch(`${API}/Usuarios/${usuarioACambiar}`, {
+                const res = await apiFetch(`${API}/Usuarios/${usuarioACambiar}`, {
                     method: 'PUT',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
@@ -3588,7 +3598,7 @@
         async function eliminarProducto(id) {
             confirmar('¿Estás segura de eliminar este producto? Esta acción no se puede deshacer.', async () => {
                 try {
-                    const res = await fetch(`${API}/Productos/${id}`, { method: 'DELETE' });
+                    const res = await apiFetch(`${API}/Productos/${id}`, { method: 'DELETE' });
                     if (!res.ok) {
                         showToast('Error al eliminar el producto', 'red');
                         return;
