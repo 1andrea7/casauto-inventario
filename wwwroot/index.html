@@ -2687,7 +2687,7 @@
                         <div class="stock-fill out" style="width:0%"></div>
                       </div>
                       <div style="display:flex;gap:8px">
-                        <button class="btn btn-primary btn-sm" onclick="abrirMovimiento(${p.idProducto})">Registrar Entrada</button>
+                        ${window.rolActual !== 'Consulta' ? `<button class="btn btn-primary btn-sm" onclick="abrirMovimiento(${p.idProducto})">Registrar Entrada</button>` : ''}
                       </div>
                     </div>
                   </div>`).join('');
@@ -2715,7 +2715,7 @@
                         <div class="stock-fill low" style="width:${pct}%"></div>
                       </div>
                       <div style="display:flex;gap:8px">
-                        <button class="btn btn-primary btn-sm" onclick="abrirMovimiento(${p.idProducto})">Registrar Entrada</button>
+                        ${window.rolActual !== 'Consulta' ? `<button class="btn btn-primary btn-sm" onclick="abrirMovimiento(${p.idProducto})">Registrar Entrada</button>` : ''}
                       </div>
                     </div>
                   </div>`;
