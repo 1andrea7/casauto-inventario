@@ -46,6 +46,8 @@ namespace CasautoAPI.Controllers
         public async Task<IActionResult> PutProducto(int id, Producto producto)
         {
             if (id != producto.IdProducto) return BadRequest();
+            var existe = await _context.Productos.AnyAsync(p => p.IdProducto == id);
+            if (!existe) return NotFound();
             _context.Entry(producto).State = EntityState.Modified;
             await _context.SaveChangesAsync();
             return NoContent();

@@ -22,6 +22,18 @@ namespace CasautoAPI.Controllers
         {
             return await _context.Usuarios
                 .Include(u => u.Rol)
+                .Select(u => new Usuario
+                {
+                    IdUsuario               = u.IdUsuario,
+                    Nombre                  = u.Nombre,
+                    Apellido                = u.Apellido,
+                    Email                   = u.Email,
+                    Estado                  = u.Estado,
+                    FechaCreacion           = u.FechaCreacion,
+                    FechaUltimaModificacion = u.FechaUltimaModificacion,
+                    IdRol                   = u.IdRol,
+                    Rol                     = u.Rol
+                })
                 .ToListAsync();
         }
 
@@ -31,7 +43,20 @@ namespace CasautoAPI.Controllers
         {
             var usuario = await _context.Usuarios
                 .Include(u => u.Rol)
-                .FirstOrDefaultAsync(u => u.IdUsuario == id);
+                .Where(u => u.IdUsuario == id)
+                .Select(u => new Usuario
+                {
+                    IdUsuario               = u.IdUsuario,
+                    Nombre                  = u.Nombre,
+                    Apellido                = u.Apellido,
+                    Email                   = u.Email,
+                    Estado                  = u.Estado,
+                    FechaCreacion           = u.FechaCreacion,
+                    FechaUltimaModificacion = u.FechaUltimaModificacion,
+                    IdRol                   = u.IdRol,
+                    Rol                     = u.Rol
+                })
+                .FirstOrDefaultAsync();
             if (usuario == null) return NotFound();
             return usuario;
         }
@@ -41,6 +66,7 @@ namespace CasautoAPI.Controllers
         public async Task<ActionResult<Usuario>> PostUsuario(Usuario usuario)
         {
             usuario.FechaCreacion = DateTime.Now;
+            usuario.ContrasenaHash = BCrypt.Net.BCrypt.HashPassword(usuario.ContrasenaHash);
             _context.Usuarios.Add(usuario);
             await _context.SaveChangesAsync();
             return CreatedAtAction(nameof(GetUsuario), new { id = usuario.IdUsuario }, usuario);
@@ -51,6 +77,17 @@ namespace CasautoAPI.Controllers
         public async Task<IActionResult> PutUsuario(int id, Usuario usuario)
         {
             if (id != usuario.IdUsuario) return BadRequest();
+
+            // Obtener el usuario actual de la BD
+            var usuarioActual = await _context.Usuarios.AsNoTracking().FirstOrDefaultAsync(u => u.IdUsuario == id);
+            if (usuarioActual == null) return NotFound();
+
+            // Si la contraseña cambió, hashearla
+            if (usuario.ContrasenaHash != usuarioActual.ContrasenaHash)
+            {
+                usuario.ContrasenaHash = BCrypt.Net.BCrypt.HashPassword(usuario.ContrasenaHash);
+            }
+
             usuario.FechaUltimaModificacion = DateTime.Now;
             _context.Entry(usuario).State = EntityState.Modified;
             _context.Entry(usuario).Property(u => u.FechaCreacion).IsModified = false;
@@ -75,10 +112,25 @@ namespace CasautoAPI.Controllers
         {
             var usuario = await _context.Usuarios
                 .Include(u => u.Rol)
-                .FirstOrDefaultAsync(u => u.Email == request.Email
-                                       && u.ContrasenaHash == request.Contrasena);
+                .FirstOrDefaultAsync(u => u.Email == request.Email);
 
             if (usuario == null)
+                return Unauthorized(new { mensaje = "Credenciales incorrectas" });
+
+            bool passwordValida = false;
+
+            // Intentar verificar como BCrypt
+            try
+            {
+                passwordValida = BCrypt.Net.BCrypt.Verify(request.Contrasena, usuario.ContrasenaHash);
+            }
+            catch
+            {
+                // Si falla (hash inválido), comparar como texto plano (compatibilidad)
+                passwordValida = usuario.ContrasenaHash == request.Contrasena;
+            }
+
+            if (!passwordValida)
                 return Unauthorized(new { mensaje = "Credenciales incorrectas" });
 
             return Ok(new

@@ -31,6 +31,13 @@ namespace CasautoAPI.Controllers
         [HttpPost]
         public async Task<ActionResult<MovimientoInventario>> PostMovimiento(MovimientoInventario movimiento)
         {
+            if (movimiento.Cantidad <= 0)
+                return BadRequest("La cantidad debe ser mayor a cero.");
+
+            movimiento.TipoMovimiento = movimiento.TipoMovimiento.Trim().ToLower();
+            if (movimiento.TipoMovimiento != "entrada" && movimiento.TipoMovimiento != "salida")
+                return BadRequest("El tipo de movimiento debe ser 'entrada' o 'salida'.");
+
             // Obtener producto actual
             var producto = await _context.Productos.FindAsync(movimiento.IdProducto);
             if (producto == null) return NotFound("Producto no encontrado");
@@ -39,9 +46,15 @@ namespace CasautoAPI.Controllers
             movimiento.StockAntes = producto.StockActual;
 
             if (movimiento.TipoMovimiento == "entrada")
+            {
                 producto.StockActual += movimiento.Cantidad;
+            }
             else
+            {
+                if (producto.StockActual < movimiento.Cantidad)
+                    return BadRequest("Stock insuficiente para registrar la salida.");
                 producto.StockActual -= movimiento.Cantidad;
+            }
 
             movimiento.StockDespues = producto.StockActual;
             movimiento.FechaMovimiento = DateTime.Now;

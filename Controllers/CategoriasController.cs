@@ -38,6 +38,8 @@ namespace CasautoAPI.Controllers
         public async Task<IActionResult> PutCategoria(int id, Categoria categoria)
         {
             if (id != categoria.IdCategoria) return BadRequest();
+            var existe = await _context.Categorias.AnyAsync(c => c.IdCategoria == id);
+            if (!existe) return NotFound();
             _context.Entry(categoria).State = EntityState.Modified;
             await _context.SaveChangesAsync();
             return NoContent();
