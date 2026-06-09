@@ -112,6 +112,13 @@ namespace CasautoAPI.Controllers
                 m.IdUsuario = null;
             }
 
+            var registros = await _context.RegistrosActividad
+                .Where(r => r.IdUsuario == id)
+                .ToListAsync();
+
+            foreach (var r in registros)
+                r.IdUsuario = null;
+
             _context.Usuarios.Remove(usuario);
             await _context.SaveChangesAsync();
             return NoContent();
