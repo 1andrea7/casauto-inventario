@@ -59,6 +59,17 @@ namespace CasautoAPI.Controllers
         {
             var producto = await _context.Productos.FindAsync(id);
             if (producto == null) return NotFound();
+
+            var movimientos = await _context.MovimientosInventario
+                .Where(m => m.IdProducto == id)
+                .ToListAsync();
+
+            foreach (var m in movimientos)
+            {
+                m.NombreProductoEliminado = $"{producto.Nombre} (eliminado)";
+                m.IdProducto = null;
+            }
+
             _context.Productos.Remove(producto);
             await _context.SaveChangesAsync();
             return NoContent();

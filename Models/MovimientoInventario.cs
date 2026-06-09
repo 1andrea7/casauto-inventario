@@ -4,7 +4,7 @@
     {
         public int IdMovimiento { get; set; }
         public string TipoMovimiento { get; set; } = string.Empty;
-        public int IdProducto { get; set; }
+        public int? IdProducto { get; set; }
         public int Cantidad { get; set; }
         public decimal? PrecioUnitarioMovimiento { get; set; }
         public string? Motivo { get; set; }
@@ -14,6 +14,7 @@
         public int StockDespues { get; set; }
         public int? IdUsuario { get; set; }
         public string? NombreUsuarioEliminado { get; set; }
+        public string? NombreProductoEliminado { get; set; }
         public DateTime? FechaMovimiento { get; set; }
         public Producto? Producto { get; set; }
         public Usuario? Usuario { get; set; }
