@@ -2892,11 +2892,11 @@
             let filtrados = todosLosRegistros;
 
             if (inicio) {
-                filtrados = filtrados.filter(r => new Date(r.fechaAccion) >= new Date(inicio));
+                const inicioDate = new Date(inicio + 'T00:00:00');
+                filtrados = filtrados.filter(r => new Date(r.fechaAccion) >= inicioDate);
             }
             if (fin) {
-                const finDia = new Date(fin);
-                finDia.setHours(23, 59, 59);
+                const finDia = new Date(fin + 'T23:59:59');
                 filtrados = filtrados.filter(r => new Date(r.fechaAccion) <= finDia);
             }
 
@@ -3750,11 +3750,11 @@
             let filtrados = todosLosMovimientos;
 
             if (inicio) {
-                filtrados = filtrados.filter(m => new Date(m.fechaMovimiento) >= new Date(inicio));
+                const inicioDate = new Date(inicio + 'T00:00:00');
+                filtrados = filtrados.filter(m => new Date(m.fechaMovimiento) >= inicioDate);
             }
             if (fin) {
-                const finDia = new Date(fin);
-                finDia.setHours(23, 59, 59);
+                const finDia = new Date(fin + 'T23:59:59');
                 filtrados = filtrados.filter(m => new Date(m.fechaMovimiento) <= finDia);
             }
 
@@ -3770,11 +3770,11 @@
                 : todosLosMovimientos.filter(m => m.tipoMovimiento === tipo);
 
             if (inicio) {
-                filtrados = filtrados.filter(m => new Date(m.fechaMovimiento) >= new Date(inicio));
+                const inicioDate = new Date(inicio + 'T00:00:00');
+                filtrados = filtrados.filter(m => new Date(m.fechaMovimiento) >= inicioDate);
             }
             if (fin) {
-                const finDia = new Date(fin);
-                finDia.setHours(23, 59, 59);
+                const finDia = new Date(fin + 'T23:59:59');
                 filtrados = filtrados.filter(m => new Date(m.fechaMovimiento) <= finDia);
             }
 
