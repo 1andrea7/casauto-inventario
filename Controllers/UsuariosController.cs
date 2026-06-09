@@ -101,6 +101,17 @@ namespace CasautoAPI.Controllers
         {
             var usuario = await _context.Usuarios.FindAsync(id);
             if (usuario == null) return NotFound();
+
+            var movimientos = await _context.MovimientosInventario
+                .Where(m => m.IdUsuario == id)
+                .ToListAsync();
+
+            foreach (var m in movimientos)
+            {
+                m.NombreUsuarioEliminado = $"{usuario.Nombre} {usuario.Apellido} (eliminado)";
+                m.IdUsuario = null;
+            }
+
             _context.Usuarios.Remove(usuario);
             await _context.SaveChangesAsync();
             return NoContent();

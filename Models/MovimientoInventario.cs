@@ -12,7 +12,8 @@
         public string? Observaciones { get; set; }
         public int StockAntes { get; set; }
         public int StockDespues { get; set; }
-        public int IdUsuario { get; set; }
+        public int? IdUsuario { get; set; }
+        public string? NombreUsuarioEliminado { get; set; }
         public DateTime? FechaMovimiento { get; set; }
         public Producto? Producto { get; set; }
         public Usuario? Usuario { get; set; }
