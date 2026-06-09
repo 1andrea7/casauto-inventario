@@ -3402,7 +3402,9 @@
                         return;
                     }
                     showToast('Usuario eliminado', 'red');
-                    registrarActividad('USUARIO', id, 'DELETE', `Usuario eliminado ID: ${id}`);
+                    const uEliminado = todosLosUsuarios.find(u => u.idUsuario === id);
+                    const nombreEliminado = uEliminado ? `${uEliminado.nombre} ${uEliminado.apellido}` : `ID: ${id}`;
+                    registrarActividad('USUARIO', id, 'DELETE', `Usuario eliminado: ${nombreEliminado}`);
                     cargarUsuarios();
                 } catch (err) {
                     showToast('Error conectando con la API', 'red');
