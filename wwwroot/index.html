@@ -1819,6 +1819,14 @@
             <!-- ═══ BITÁCORA ═══ -->
             <div class="view" id="view-bitacora">
                 <div class="section-header">
+                    <div style="display:flex;gap:8px;margin-left:auto">
+                        <input type="date" id="bitacora-fecha-inicio" class="filter-select"
+                               style="padding:7px 12px;font-family:'Barlow',sans-serif;"
+                               onchange="filtrarBitacoraPorFecha()">
+                        <input type="date" id="bitacora-fecha-fin" class="filter-select"
+                               style="padding:7px 12px;font-family:'Barlow',sans-serif;"
+                               onchange="filtrarBitacoraPorFecha()">
+                    </div>
                 </div>
                 <div class="card">
                     <div class="table-wrap">
@@ -2863,17 +2871,37 @@
 
         let paginaBitacora = 1;
         const bitacoraPorPagina = 10;
+        let todosLosRegistros = [];
 
         async function cargarBitacora() {
             const tbody = document.getElementById('tbody-bitacora');
             tbody.innerHTML = `<tr><td colspan="5" style="text-align:center;color:var(--text3);padding:30px">Cargando bitácora...</td></tr>`;
             try {
                 const res = await apiFetch(`${API}/RegistroActividad`);
-                const registros = await res.json();
-                renderBitacora(registros);
+                todosLosRegistros = await res.json();
+                filtrarBitacoraPorFecha();
             } catch (err) {
                 tbody.innerHTML = `<tr><td colspan="5" style="text-align:center;color:var(--accent);padding:30px">⚠ Error conectando con la API</td></tr>`;
             }
+        }
+
+        function filtrarBitacoraPorFecha() {
+            const inicio = document.getElementById('bitacora-fecha-inicio').value;
+            const fin = document.getElementById('bitacora-fecha-fin').value;
+
+            let filtrados = todosLosRegistros;
+
+            if (inicio) {
+                filtrados = filtrados.filter(r => new Date(r.fechaAccion) >= new Date(inicio));
+            }
+            if (fin) {
+                const finDia = new Date(fin);
+                finDia.setHours(23, 59, 59);
+                filtrados = filtrados.filter(r => new Date(r.fechaAccion) <= finDia);
+            }
+
+            paginaBitacora = 1;
+            renderBitacora(filtrados);
         }
 
         function renderBitacora(registros) {
@@ -2937,7 +2965,7 @@
 
         function cambiarPaginaBitacora(pagina) {
             paginaBitacora = pagina;
-            cargarBitacora();
+            filtrarBitacoraPorFecha();
         }
 
         function calcularHace(fecha) {
