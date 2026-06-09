@@ -1543,33 +1543,7 @@
                                 <button class="btn btn-ghost btn-sm" onclick="switchView('alertas')">Ver todas</button>
                             </div>
                             <div class="card-body">
-                                <div class="alert-list">
-                                    <div class="alert-item critical">
-                                        <div class="alert-dot"></div>
-                                        <div class="alert-prod">Correa Dentada Gates XS</div>
-                                        <div class="alert-stock">1 / mín 5</div>
-                                    </div>
-                                    <div class="alert-item critical">
-                                        <div class="alert-dot"></div>
-                                        <div class="alert-prod">Batería 65AH Bosch S4</div>
-                                        <div class="alert-stock">0 / mín 3</div>
-                                    </div>
-                                    <div class="alert-item warning">
-                                        <div class="alert-dot"></div>
-                                        <div class="alert-prod">Filtro Aceite Purolator</div>
-                                        <div class="alert-stock">3 / mín 8</div>
-                                    </div>
-                                    <div class="alert-item warning">
-                                        <div class="alert-dot"></div>
-                                        <div class="alert-prod">Refrigerante PEAK 50/50</div>
-                                        <div class="alert-stock">4 / mín 10</div>
-                                    </div>
-                                    <div class="alert-item warning">
-                                        <div class="alert-dot"></div>
-                                        <div class="alert-prod">Bujías NGK Platinum</div>
-                                        <div class="alert-stock">5 / mín 12</div>
-                                    </div>
-                                </div>
+                                <div class="alert-list" id="dashboard-alert-list"></div>
                             </div>
                         </div>
 
@@ -1716,12 +1690,12 @@
                         </table>
                     </div>
                 </div>
-            </div>
-            <div style="display:flex;align-items:center;justify-content:space-between;margin-top:12px;">
-                <div id="movimientos-contador" style="font-size:11px;color:var(--text3);letter-spacing:.5px">
-                    Mostrando 0 movimientos
-                </div>
-                <div id="movimientos-paginacion" style="display:flex;gap:4px;align-items:center;">
+                <div style="display:flex;align-items:center;justify-content:space-between;margin-top:12px;">
+                    <div id="movimientos-contador" style="font-size:11px;color:var(--text3);letter-spacing:.5px">
+                        Mostrando 0 movimientos
+                    </div>
+                    <div id="movimientos-paginacion" style="display:flex;gap:4px;align-items:center;">
+                    </div>
                 </div>
             </div>
 
@@ -1806,12 +1780,12 @@
                         </table>
                     </div>
                 </div>
-            </div>
-            <div style="display:flex;align-items:center;justify-content:space-between;margin-top:12px;">
-                <div id="usuarios-contador" style="font-size:11px;color:var(--text3);letter-spacing:.5px">
-                    Mostrando 0 usuarios
-                </div>
-                <div id="usuarios-paginacion" style="display:flex;gap:4px;align-items:center;">
+                <div style="display:flex;align-items:center;justify-content:space-between;margin-top:12px;">
+                    <div id="usuarios-contador" style="font-size:11px;color:var(--text3);letter-spacing:.5px">
+                        Mostrando 0 usuarios
+                    </div>
+                    <div id="usuarios-paginacion" style="display:flex;gap:4px;align-items:center;">
+                    </div>
                 </div>
             </div>
 
@@ -2839,7 +2813,7 @@
                 }
 
                 // Alertas de stock
-                const alertList = document.querySelector('.alert-list');
+                const alertList = document.getElementById('dashboard-alert-list');
                 if (d.alertas.length > 0) {
                     alertList.innerHTML = d.alertas.map(p => {
                         const esCritico = p.stockActual === 0;
@@ -2849,6 +2823,8 @@
                     <div class="alert-stock">${p.stockActual} / mín ${p.stockMinimo}</div>
                   </div>`;
                     }).join('');
+                } else {
+                    alertList.innerHTML = `<div style="color:var(--text3);font-size:13px;padding:12px 0">Sin alertas de stock</div>`;
                 }
 
             } catch (err) {
@@ -3011,6 +2987,7 @@
                 filtroCat.innerHTML = '<option value="">Todas las categorías</option>' +
                     categorias.map(c => `<option value="${c.idCategoria}">${c.nombreCategoria}</option>`).join('');
                 filtroCat.value = valorActual;  
+                window._productosFiltrados = todosLosProductos;
                 renderProductos(todosLosProductos);
             } catch (err) {
                 tbody.innerHTML = `<tr><td colspan="9" style="text-align:center;color:var(--accent);padding:30px">⚠ Error conectando con la API</td></tr>`;
@@ -3975,8 +3952,9 @@
                 tbody.innerHTML = `<tr><td colspan="9" style="text-align:center;color:var(--text3);padding:30px">No hay productos que coincidan con los filtros.</td></tr>`;
             } else {
                 tbody.innerHTML = paginados.map(p => {
-                    const stockPct = p.stockMinimo ? Math.min((p.stockActual / p.stockMinimo) * 100, 100) : 100;
+                    const rawPct = p.stockMinimo ? Math.min((p.stockActual / p.stockMinimo) * 100, 100) : 100;
                     const stockClass = p.stockActual === 0 ? 'out' : p.stockActual < p.stockMinimo ? 'low' : 'ok';
+                    const stockPct = stockClass === 'out' ? 100 : rawPct;
                     const badgeText = p.stockActual === 0 ? '✕ Agotado' : p.stockActual < p.stockMinimo ? '⚠ Bajo' : 'OK';
                     const stockColor = stockClass === 'out' ? 'color:var(--accent)' : stockClass === 'low' ? 'color:var(--yellow)' : '';
                     const precioCompra = p.precioCompra ? `$${p.precioCompra.toLocaleString('es-CO')}` : '—';
