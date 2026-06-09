@@ -2295,6 +2295,14 @@
             ? 'https://casauto-inventario.runasp.net/api'   // Si es GitHub Pages
             : '/api';                                        // Si es MonsterASP.NET o local
 
+        function formatFecha(fechaStr, soloFecha = false) {
+            if (!fechaStr) return '—';
+            const opts = soloFecha
+                ? { timeZone: 'America/Bogota', day: '2-digit', month: '2-digit', year: 'numeric' }
+                : { timeZone: 'America/Bogota', day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' };
+            return new Date(fechaStr).toLocaleString('es-CO', opts);
+        }
+
         // Fetch con headers de ngrok para evitar bloqueo
         async function apiFetch(url, options = {}) {
             const defaultHeaders = { 'ngrok-skip-browser-warning': 'true' };
@@ -2888,10 +2896,7 @@
                     'UPDATE': 'var(--yellow)'
                 };
                 tbody.innerHTML = paginados.map(r => {
-                    const fecha = new Date(r.fechaAccion).toLocaleDateString('es-CO', {
-                        day: '2-digit', month: '2-digit', year: 'numeric',
-                        hour: '2-digit', minute: '2-digit'
-                    });
+                    const fecha = formatFecha(r.fechaAccion);
                     const color = colores[r.accion] || 'var(--text2)';
                     return `<tr>
                         <td class="mono">${fecha}</td>
@@ -3178,9 +3183,7 @@
             const encabezados = ['Fecha', 'Tipo', 'Producto', 'Cantidad', 'Stock Antes', 'Stock Después', 'Motivo', 'Referencia', 'Usuario'];
 
             const filas = datos.map(m => {
-                const fecha = new Date(m.fechaMovimiento).toLocaleDateString('es-CO', {
-                    day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit'
-                });
+                const fecha = formatFecha(m.fechaMovimiento);
                 const esEntrada = m.tipoMovimiento === 'entrada';
                 return [
                     fecha,
@@ -3281,9 +3284,7 @@
                 startY: 24,
                 head: [['Fecha', 'Tipo', 'Producto', 'Cantidad', 'Stock Antes', 'Stock Después', 'Motivo', 'Referencia', 'Usuario']],
                 body: datos.map(m => {
-                    const fecha = new Date(m.fechaMovimiento).toLocaleDateString('es-CO', {
-                        day: '2-digit', month: '2-digit', year: 'numeric'
-                    });
+                    const fecha = formatFecha(m.fechaMovimiento, true);
                     const esEntrada = m.tipoMovimiento === 'entrada';
                     return [
                         fecha,
@@ -3662,9 +3663,7 @@
                 tbody.innerHTML = `<tr><td colspan="8" style="text-align:center;color:var(--text3);padding:30px">No hay movimientos registrados.</td></tr>`;
             } else {
                 tbody.innerHTML = paginados.map(m => {
-                    const fecha = new Date(m.fechaMovimiento).toLocaleDateString('es-CO', {
-                        day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit'
-                    });
+                    const fecha = formatFecha(m.fechaMovimiento);
                     const eEntrada = m.tipoMovimiento === 'entrada';
                     const badgeClass = eEntrada ? 'in' : 'out';
                     const badgeText = eEntrada ? '▲ Entrada' : '▼ Salida';

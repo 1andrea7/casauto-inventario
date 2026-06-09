@@ -65,7 +65,7 @@ namespace CasautoAPI.Controllers
         [HttpPost]
         public async Task<ActionResult<Usuario>> PostUsuario(Usuario usuario)
         {
-            usuario.FechaCreacion = DateTime.Now;
+            usuario.FechaCreacion = DateTime.UtcNow;
             usuario.ContrasenaHash = BCrypt.Net.BCrypt.HashPassword(usuario.ContrasenaHash);
             _context.Usuarios.Add(usuario);
             await _context.SaveChangesAsync();
@@ -88,7 +88,7 @@ namespace CasautoAPI.Controllers
                 usuario.ContrasenaHash = BCrypt.Net.BCrypt.HashPassword(usuario.ContrasenaHash);
             }
 
-            usuario.FechaUltimaModificacion = DateTime.Now;
+            usuario.FechaUltimaModificacion = DateTime.UtcNow;
             _context.Entry(usuario).State = EntityState.Modified;
             _context.Entry(usuario).Property(u => u.FechaCreacion).IsModified = false;
             await _context.SaveChangesAsync();

@@ -31,7 +31,7 @@ namespace CasautoAPI.Controllers
         [HttpPost]
         public async Task<ActionResult<RegistroActividad>> PostRegistro(RegistroActividad registro)
         {
-            registro.FechaAccion = DateTime.Now;
+            registro.FechaAccion = DateTime.UtcNow;
             _context.RegistrosActividad.Add(registro);
             await _context.SaveChangesAsync();
             return Ok(registro);

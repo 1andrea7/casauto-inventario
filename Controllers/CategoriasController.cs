@@ -27,7 +27,7 @@ namespace CasautoAPI.Controllers
         [HttpPost]
         public async Task<ActionResult<Categoria>> PostCategoria(Categoria categoria)
         {
-            categoria.FechaCreacion = DateTime.Now;
+            categoria.FechaCreacion = DateTime.UtcNow;
             _context.Categorias.Add(categoria);
             await _context.SaveChangesAsync();
             return CreatedAtAction(nameof(GetCategorias), new { id = categoria.IdCategoria }, categoria);

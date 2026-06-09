@@ -57,11 +57,11 @@ namespace CasautoAPI.Controllers
             }
 
             movimiento.StockDespues = producto.StockActual;
-            movimiento.FechaMovimiento = DateTime.Now;
+            movimiento.FechaMovimiento = DateTime.UtcNow;
 
             // Guardar movimiento y actualizar producto
             _context.MovimientosInventario.Add(movimiento);
-            producto.FechaUltimaModificacion = DateTime.Now;
+            producto.FechaUltimaModificacion = DateTime.UtcNow;
             await _context.SaveChangesAsync();
 
             return CreatedAtAction(nameof(GetMovimientos), new { id = movimiento.IdMovimiento }, movimiento);
