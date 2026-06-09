@@ -2568,6 +2568,7 @@
             try {
                 const res = await apiFetch(`${API}/Categorias`);
                 const categorias = await res.json();
+                todasLasCategorias = categorias;
                 const tbody = document.querySelector('#view-categorias table tbody');
 
                 if (categorias.length === 0) {
@@ -2606,7 +2607,9 @@
                         return;
                     }
                     showToast('Categoría eliminada', 'red');
-                    registrarActividad('CATEGORIA', id, 'DELETE', `Categoría eliminada ID: ${id}`);
+                    const catEliminada = todasLasCategorias.find(c => c.idCategoria === id);
+                    const nombreCatEliminada = catEliminada ? catEliminada.nombreCategoria : `ID: ${id}`;
+                    registrarActividad('CATEGORIA', id, 'DELETE', `Categoría eliminada: ${nombreCatEliminada}`);
                     cargarCategorias();
                 } catch (err) {
                     showToast('Error conectando con la API', 'red');
@@ -3635,7 +3638,9 @@
                         return;
                     }
                     showToast('Producto eliminado', 'red');
-                    registrarActividad('PRODUCTO', id, 'DELETE', `Producto eliminado ID: ${id}`);
+                    const prodEliminado = todosLosProductos.find(p => p.idProducto === id);
+                    const nombreProdEliminado = prodEliminado ? prodEliminado.nombre : `ID: ${id}`;
+                    registrarActividad('PRODUCTO', id, 'DELETE', `Producto eliminado: ${nombreProdEliminado}`);
                     cargarProductos();
                 } catch (err) {
                     showToast('Error conectando con la API', 'red');
@@ -3909,6 +3914,7 @@
 
         // ═══ FILTRAR PRODUCTOS ═══
         let todosLosProductos = [];
+        let todasLasCategorias = [];
 
         function filtrarProductos() {
             const categoria = document.getElementById('filtro-categoria').value;
