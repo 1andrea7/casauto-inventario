@@ -22,8 +22,8 @@ namespace CasautoAPI.Controllers
         {
             return await _context.RegistrosActividad
                 .Include(r => r.Usuario)
-                .OrderByDescending(r => r.FechaAccion)
-                .Take(200)
+                .OrderByDescending(r => r.IdRegistro)
+                .Take(500)
                 .ToListAsync();
         }
 

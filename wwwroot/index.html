@@ -2303,12 +2303,19 @@
             ? 'https://casauto-inventario.runasp.net/api'   // Si es GitHub Pages
             : '/api';                                        // Si es MonsterASP.NET o local
 
+        // Las fechas de la BD vienen sin sufijo de zona (EF Core devuelve DateTimeKind.Unspecified).
+        // Agregamos 'Z' para que JS las trate como UTC y la conversión a Bogotá sea correcta.
+        function asUTC(fechaStr) {
+            if (!fechaStr) return null;
+            return new Date(fechaStr.includes('Z') || fechaStr.includes('+') ? fechaStr : fechaStr + 'Z');
+        }
+
         function formatFecha(fechaStr, soloFecha = false) {
             if (!fechaStr) return '—';
             const opts = soloFecha
                 ? { timeZone: 'America/Bogota', day: '2-digit', month: '2-digit', year: 'numeric' }
                 : { timeZone: 'America/Bogota', day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' };
-            return new Date(fechaStr).toLocaleString('es-CO', opts);
+            return asUTC(fechaStr).toLocaleString('es-CO', opts);
         }
 
         // Fetch con headers de ngrok para evitar bloqueo
@@ -2852,7 +2859,7 @@
         // ═══ BITÁCORA / REGISTRO DE ACTIVIDAD ═══
         async function registrarActividad(tabla, idAfectado, accion, descripcion, valoresNuevos = null) {
             try {
-                await apiFetch(`${API}/RegistroActividad`, {
+                const res = await apiFetch(`${API}/RegistroActividad`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
@@ -2861,9 +2868,13 @@
                         accion: accion,
                         descripcionCambio: descripcion,
                         valoresNuevos: valoresNuevos ? JSON.stringify(valoresNuevos) : null,
-                        idUsuario: usuarioActual?.idUsuario || 0
+                        idUsuario: usuarioActual?.idUsuario ?? null
                     })
                 });
+                if (!res.ok) {
+                    const texto = await res.text();
+                    console.error(`Error registrando actividad [${res.status}]:`, texto);
+                }
             } catch (err) {
                 console.warn('No se pudo registrar actividad:', err);
             }
@@ -2885,6 +2896,13 @@
             }
         }
 
+        // Colombia = UTC-5: medianoche Colombia = 05:00 UTC; fin de día Colombia = 04:59:59 UTC del día siguiente
+        function colombiaMidnightUTC(dateStr) { return new Date(dateStr + 'T05:00:00Z'); }
+        function colombiaEndOfDayUTC(dateStr) {
+            const d = colombiaMidnightUTC(dateStr);
+            return new Date(d.getTime() + 86400000 - 1000); // + 23h 59m 59s
+        }
+
         function filtrarBitacoraPorFecha() {
             const inicio = document.getElementById('bitacora-fecha-inicio').value;
             const fin = document.getElementById('bitacora-fecha-fin').value;
@@ -2892,12 +2910,12 @@
             let filtrados = todosLosRegistros;
 
             if (inicio) {
-                const inicioDate = new Date(inicio + 'T00:00:00');
-                filtrados = filtrados.filter(r => new Date(r.fechaAccion) >= inicioDate);
+                const inicioUTC = colombiaMidnightUTC(inicio);
+                filtrados = filtrados.filter(r => asUTC(r.fechaAccion) >= inicioUTC);
             }
             if (fin) {
-                const finDia = new Date(fin + 'T23:59:59');
-                filtrados = filtrados.filter(r => new Date(r.fechaAccion) <= finDia);
+                const finUTC = colombiaEndOfDayUTC(fin);
+                filtrados = filtrados.filter(r => asUTC(r.fechaAccion) <= finUTC);
             }
 
             paginaBitacora = 1;
@@ -3750,12 +3768,12 @@
             let filtrados = todosLosMovimientos;
 
             if (inicio) {
-                const inicioDate = new Date(inicio + 'T00:00:00');
-                filtrados = filtrados.filter(m => new Date(m.fechaMovimiento) >= inicioDate);
+                const inicioUTC = colombiaMidnightUTC(inicio);
+                filtrados = filtrados.filter(m => asUTC(m.fechaMovimiento) >= inicioUTC);
             }
             if (fin) {
-                const finDia = new Date(fin + 'T23:59:59');
-                filtrados = filtrados.filter(m => new Date(m.fechaMovimiento) <= finDia);
+                const finUTC = colombiaEndOfDayUTC(fin);
+                filtrados = filtrados.filter(m => asUTC(m.fechaMovimiento) <= finUTC);
             }
 
             renderMovimientos(filtrados);
@@ -3770,12 +3788,12 @@
                 : todosLosMovimientos.filter(m => m.tipoMovimiento === tipo);
 
             if (inicio) {
-                const inicioDate = new Date(inicio + 'T00:00:00');
-                filtrados = filtrados.filter(m => new Date(m.fechaMovimiento) >= inicioDate);
+                const inicioUTC = colombiaMidnightUTC(inicio);
+                filtrados = filtrados.filter(m => asUTC(m.fechaMovimiento) >= inicioUTC);
             }
             if (fin) {
-                const finDia = new Date(fin + 'T23:59:59');
-                filtrados = filtrados.filter(m => new Date(m.fechaMovimiento) <= finDia);
+                const finUTC = colombiaEndOfDayUTC(fin);
+                filtrados = filtrados.filter(m => asUTC(m.fechaMovimiento) <= finUTC);
             }
 
             renderMovimientos(filtrados);
